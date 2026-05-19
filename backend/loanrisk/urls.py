@@ -5,7 +5,7 @@ from django.urls import (
     include,
     re_path
 )
-
+from .views import home
 from rest_framework import permissions
 
 from drf_yasg.views import (
@@ -53,7 +53,7 @@ schema_view = get_schema_view(
 # =========================================
 
 urlpatterns = [
-
+    path('', home),
     # ADMIN
 
     path(
