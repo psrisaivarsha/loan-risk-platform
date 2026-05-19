@@ -1,0 +1,35 @@
+services:
+
+  backend:
+
+    build: ./backend
+
+    container_name:
+      loanrisk_backend
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./backend:/app
+
+  frontend:
+
+    build: ./frontend
+
+    container_name:
+      loanrisk_frontend
+
+    ports:
+      - "5173:5173"
+
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+    stdin_open: true
+
+    tty: true
+
+    depends_on:
+      - backend
