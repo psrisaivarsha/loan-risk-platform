@@ -147,11 +147,8 @@ REST_FRAMEWORK = {
 # CORS CONFIGURATION
 # =========================================
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://loan-risk-platform-q3jwbn2p7-psrisaivarshas-projects.vercel.app",
-    "https://loan-risk-platform-9a0xynguj-psrisaivarshas-projects.vercel.app",  # ← add this
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://loan-risk-platform.*\.vercel\.app$",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
