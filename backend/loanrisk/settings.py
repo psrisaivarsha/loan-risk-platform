@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,23 +22,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config(
-    "SECRET_KEY"
-)
-
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config(
-    "DEBUG",
-    cast=bool
-)
+DEBUG = config("DEBUG", cast=bool)
 
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS"
-).split(",")
+ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
 
 
-# Application definition
+# =========================================
+# APPLICATION DEFINITION
+# =========================================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,7 +53,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Must be first
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -87,25 +83,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'loanrisk.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# =========================================
+# DATABASE
+# =========================================
 
 DATABASES = {
-
     'default': {
-
-        'ENGINE':
-            'django.db.backends.sqlite3',
-
-        'NAME':
-            BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+# =========================================
+# PASSWORD VALIDATION
+# =========================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -123,115 +115,95 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# =========================================
+# INTERNATIONALIZATION
+# =========================================
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# =========================================
+# STATIC FILES
+# =========================================
 
 STATIC_URL = 'static/'
+
+
+# =========================================
+# REST FRAMEWORK
+# =========================================
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+
+# =========================================
+# CORS CONFIGURATION
+# =========================================
+
 CORS_ALLOWED_ORIGINS = [
-
     "http://localhost:5173",
-
     "http://127.0.0.1:5173",
+    "https://loan-risk-platform-q3jwbn2p7-psrisaivarshas-projects.vercel.app",
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+
+
 # =========================================
 # EMAIL CONFIGURATION
 # =========================================
 
-EMAIL_BACKEND = (
-    'django.core.mail.backends.smtp.EmailBackend'
-)
-
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-
 EMAIL_PORT = 587
-
 EMAIL_USE_TLS = True
-
 EMAIL_HOST_USER = 'psrisaivarsha@gmail.com'
-
 EMAIL_HOST_PASSWORD = 'mnhm uevx ncha lozk'
-from datetime import timedelta
+
+
+# =========================================
+# JWT CONFIGURATION
+# =========================================
 
 SIMPLE_JWT = {
-
-    'ACCESS_TOKEN_LIFETIME':
-        timedelta(days=7),
-
-    'REFRESH_TOKEN_LIFETIME':
-        timedelta(days=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
+
+
 # =========================================
 # SWAGGER JWT AUTH
 # =========================================
 
 SWAGGER_SETTINGS = {
-
     'SECURITY_DEFINITIONS': {
-
         'Bearer': {
-
             'type': 'apiKey',
-
             'name': 'Authorization',
-
             'in': 'header',
-
             'description': (
-
-                'JWT Authorization '
-
-                'header using Bearer token.\n\n'
-
+                'JWT Authorization header using Bearer token.\n\n'
                 'Example:\n'
-
                 'Bearer your_token_here'
             )
         }
     }
 }
-# =========================================
-# JWT SECURITY
-# =========================================
 
-from datetime import timedelta
 
-SIMPLE_JWT = {
-
-    "ACCESS_TOKEN_LIFETIME":
-        timedelta(minutes=60),
-
-    "REFRESH_TOKEN_LIFETIME":
-        timedelta(days=1),
-
-    "ROTATE_REFRESH_TOKENS":
-        True,
-
-    "BLACKLIST_AFTER_ROTATION":
-        True,
-}
 # =========================================
 # SECURITY
 # =========================================
 
 SECURE_BROWSER_XSS_FILTER = True
-
 SECURE_CONTENT_TYPE_NOSNIFF = True
-
 X_FRAME_OPTIONS = "DENY"
