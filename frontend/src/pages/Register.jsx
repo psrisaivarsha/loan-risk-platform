@@ -45,7 +45,7 @@ export default function Register() {
       console.log("Sending Data:", formData)
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/register/`,
+        `${import.meta.env.VITE_API_URL}/api/register/`,
         formData
       )
 

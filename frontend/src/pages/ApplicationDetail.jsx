@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 
 import axios from "axios"
+import.meta.env.VITE_API_URL
 
 import { useParams } from "react-router-dom"
 
@@ -45,7 +46,7 @@ export default function ApplicationDetail() {
       const response =
         await axios.get(
 
-          `http://127.0.0.1:8000/api/loan-applications/${id}/`,
+          `${import.meta.env.VITE_API_URL}/api/loan-applications/${id}/`,
 
           {
             headers: {
@@ -95,7 +96,7 @@ export default function ApplicationDetail() {
 
       await axios.patch(
 
-        `http://127.0.0.1:8000/api/update-loan-status/${id}/`,
+        `${import.meta.env.VITE_API_URL}/api/update-loan-status/${id}/`,
 
         {
           status:
@@ -147,7 +148,7 @@ export default function ApplicationDetail() {
 
         await axios.patch(
 
-          `http://127.0.0.1:8000/api/update-loan-status/${application.id}/`,
+          `${import.meta.env.VITE_API_URL}/api/update-loan-status/${application.id}/`,
 
           {
             repayment_status:
@@ -395,7 +396,7 @@ export default function ApplicationDetail() {
                     const response =
                       await axios.get(
 
-                        `http://127.0.0.1:8000/api/applications/${application.id}/pdf/`,
+                            `${import.meta.env.VITE_API_URL}/api/applications/${application.id}/pdf/`,
 
                         {
 

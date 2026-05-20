@@ -132,7 +132,7 @@ const [
 
   axios.get(
 
-    `${import.meta.env.VITE_API_URL}/admin-loans/?page=${page}`,
+    `${import.meta.env.VITE_API_URL}/api/admin-loans/?page=${page}`,
 
     {
 

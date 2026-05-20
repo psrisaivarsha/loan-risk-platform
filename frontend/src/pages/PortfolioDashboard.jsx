@@ -84,7 +84,7 @@ export default function PortfolioDashboard() {
       const response =
         await axios.get(
 
-          `${import.meta.env.VITE_API_URL}/portfolio-analytics/`,
+          `${import.meta.env.VITE_API_URL}/api/portfolio-analytics/`,
 
           {
             headers: {

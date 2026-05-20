@@ -51,7 +51,7 @@ export default function AuditLogs() {
       const response =
         await axios.get(
 
-          `${import.meta.env.VITE_API_URL}/audit-logs/`,
+          `${import.meta.env.VITE_API_URL}/api/audit-logs/`,
 
           {
             headers: {

@@ -74,7 +74,7 @@ export default function PerformanceDashboard() {
       const response =
         await axios.get(
 
-          `${import.meta.env.VITE_API_URL}/performance-analytics/`,
+          `${import.meta.env.VITE_API_URL}/api/performance-analytics/`,
 
           {
             headers: {

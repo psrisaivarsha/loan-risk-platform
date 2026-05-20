@@ -70,7 +70,7 @@ export default function BiasMonitoring() {
       const response =
         await axios.get(
 
-          `${import.meta.env.VITE_API_URL}/bias-monitoring/`,
+          `${import.meta.env.VITE_API_URL}/api/bias-monitoring/`,
 
           {
             headers: {

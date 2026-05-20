@@ -109,7 +109,7 @@ export default function LoanForm() {
       const response =
         await axios.post(
 
-          `${import.meta.env.VITE_API_URL}/loan-applications/`,
+          `${import.meta.env.VITE_API_URL}/api/loan-applications/`,
 
           formData,
 
