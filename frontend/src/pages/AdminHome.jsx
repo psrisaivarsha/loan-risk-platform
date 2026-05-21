@@ -8,8 +8,6 @@ import {
 
   LayoutDashboard,
 
-  ShieldCheck,
-
   BarChart3,
 
   BrainCircuit,
@@ -18,51 +16,62 @@ import {
 
   Activity,
 
-  ArrowRight,
-
   Bell,
 
-  LogOut
+  LogOut,
+
+  ShieldCheck,
+
+  XCircle,
+
+  TrendingUp
 
 } from "lucide-react"
+
 import Navbar from "../components/Navbar"
 
 export default function AdminHome() {
 
   // =========================================
-  // PAGE LOAD TOAST
+  // ADMIN AUTH CHECK
   // =========================================
 
   useEffect(() => {
 
-    toast.success(
+    const token =
+      localStorage.getItem("access") ||
+      localStorage.getItem("token")
 
-      "Admin Dashboard Loaded"
+    const isStaff =
+      localStorage.getItem("is_staff")
 
-    )
+    if (!token) {
+
+      toast.error(
+        "Session Expired"
+      )
+
+      window.location.href = "/"
+
+      return
+    }
+
+    if (isStaff !== "true") {
+
+      toast.error(
+        "Unauthorized Access"
+      )
+
+      window.location.href =
+        "/user-home"
+
+      return
+    }
 
   }, [])
 
   // =========================================
-  // CARD STYLE
-  // =========================================
-
-  const cardStyle = {
-
-    border: "none",
-
-    borderRadius: "24px",
-
-    boxShadow:
-      "0 10px 30px rgba(0,0,0,0.08)",
-
-    transition: "0.3s",
-
-    overflow: "hidden"
-  }
-
-  // =========================================
-  // SIDEBAR MENU
+  // MENU STYLE
   // =========================================
 
   const menuStyle = {
@@ -80,6 +89,43 @@ export default function AdminHome() {
     fontWeight: "600",
 
     marginBottom: "10px"
+  }
+
+  // =========================================
+  // CARD STYLE
+  // =========================================
+
+  const cardStyle = {
+
+    border: "none",
+
+    borderRadius: "24px",
+
+    padding: "28px",
+
+    background: "#FFFFFF",
+
+    boxShadow:
+      "0 10px 30px rgba(0,0,0,0.06)"
+  }
+
+  // =========================================
+  // LOGOUT
+  // =========================================
+
+  const handleLogout = () => {
+
+    localStorage.clear()
+
+    toast.success(
+      "Logged Out Successfully"
+    )
+
+    setTimeout(() => {
+
+      window.location.href = "/"
+
+    }, 1000)
   }
 
   return (
@@ -100,9 +146,7 @@ export default function AdminHome() {
 
         <div className="row">
 
-          {/* ========================================= */}
           {/* SIDEBAR */}
-          {/* ========================================= */}
 
           <div
             className="col-lg-2"
@@ -115,14 +159,9 @@ export default function AdminHome() {
                 "100vh",
 
               padding:
-                "30px 20px",
-
-              borderRight:
-                "1px solid rgba(255,255,255,0.08)"
+                "30px 20px"
             }}
           >
-
-            {/* LOGO */}
 
             <div className="mb-5">
 
@@ -155,57 +194,29 @@ export default function AdminHome() {
 
             <div>
 
-              {/* DASHBOARD */}
+              <div
+                style={{
+                  ...menuStyle,
+                  background: "#2563EB",
+                  color: "white"
+                }}
+              >
 
-              {/* DASHBOARD */}
+                <LayoutDashboard
+                  size={18}
+                  className="me-2"
+                />
 
-<div
-  style={{
+                Dashboard
 
-    ...menuStyle,
-
-    background:
-      "#2563EB",
-
-    color:
-      "white"
-  }}
-
-  onClick={() => {
-
-    toast.info(
-      "Opening Dashboard"
-    )
-
-    window.location.href =
-      "/dashboard"
-  }}
->
-
-  <LayoutDashboard
-    size={18}
-    className="me-2"
-  />
-
-  Dashboard
-
-</div>
-
-              
-              {/* PORTFOLIO */}
+              </div>
 
               <div
                 style={menuStyle}
-
-                onClick={() => {
-
-                  toast.info(
-                    "Opening Portfolio Analytics"
-                  )
-
+                onClick={() =>
                   window.location.href =
-                    "/portfolio-dashboard"
-                }}
+                  "/portfolio-dashboard"
+                }
               >
 
                 <BarChart3
@@ -217,20 +228,12 @@ export default function AdminHome() {
 
               </div>
 
-              {/* BIAS */}
-
               <div
                 style={menuStyle}
-
-                onClick={() => {
-
-                  toast.info(
-                    "Opening Bias Monitoring"
-                  )
-
+                onClick={() =>
                   window.location.href =
-                    "/bias-monitoring"
-                }}
+                  "/bias-monitoring"
+                }
               >
 
                 <BrainCircuit
@@ -242,20 +245,12 @@ export default function AdminHome() {
 
               </div>
 
-              {/* AUDIT */}
-
               <div
                 style={menuStyle}
-
-                onClick={() => {
-
-                  toast.info(
-                    "Opening Audit Logs"
-                  )
-
+                onClick={() =>
                   window.location.href =
-                    "/audit-logs"
-                }}
+                  "/audit-logs"
+                }
               >
 
                 <FileSearch
@@ -267,20 +262,12 @@ export default function AdminHome() {
 
               </div>
 
-              {/* PERFORMANCE */}
-
               <div
                 style={menuStyle}
-
-                onClick={() => {
-
-                  toast.info(
-                    "Opening Performance Dashboard"
-                  )
-
+                onClick={() =>
                   window.location.href =
-                    "/performance-dashboard"
-                }}
+                  "/performance-dashboard"
+                }
               >
 
                 <Activity
@@ -296,46 +283,25 @@ export default function AdminHome() {
 
             {/* LOGOUT */}
 
-            <div
-              className="mt-5"
-            >
+            <div className="mt-5">
 
               <button
                 className="
                   btn
                   btn-danger
                   w-100
-                  d-flex
-                  align-items-center
-                  justify-content-center
-                  gap-2
                 "
                 style={{
-
-                  borderRadius:
-                    "14px",
-
-                  height:
-                    "50px"
+                  borderRadius: "14px",
+                  height: "50px"
                 }}
-
-                onClick={() => {
-
-                  toast.success(
-                    "Logged Out Successfully"
-                  )
-
-                  localStorage.clear()
-
-                  setTimeout(() => {
-
-                    window.location.href = "/"
-
-                  }, 1500)
-                }}
+                onClick={handleLogout}
               >
 
-                <LogOut size={18} />
+                <LogOut
+                  size={18}
+                  className="me-2"
+                />
 
                 Logout
 
@@ -345,9 +311,7 @@ export default function AdminHome() {
 
           </div>
 
-          {/* ========================================= */}
           {/* MAIN CONTENT */}
-          {/* ========================================= */}
 
           <div
             className="col-lg-10"
@@ -356,16 +320,13 @@ export default function AdminHome() {
             }}
           >
 
-            {/* ========================================= */}
-            {/* TOP SECTION */}
-            {/* ========================================= */}
+            {/* TOP */}
 
             <div
               className="
                 d-flex
                 justify-content-between
                 align-items-center
-                flex-wrap
                 mb-5
               "
             >
@@ -379,7 +340,7 @@ export default function AdminHome() {
                       "800",
 
                     fontSize:
-                      "48px",
+                      "52px",
 
                     color:
                       "#0F172A"
@@ -392,277 +353,166 @@ export default function AdminHome() {
 
                 <p
                   style={{
-
-                    color:
-                      "#64748B",
-
-                    fontSize:
-                      "18px"
+                    color: "#64748B",
+                    fontSize: "18px"
                   }}
                 >
 
-                  Enterprise AI Loan Risk
-                  Assessment Platform
+                  Enterprise AI Loan Risk Assessment Platform
 
                 </p>
 
               </div>
 
-              {/* NOTIFICATIONS */}
-
               <div
-                className="
-                  d-flex
-                  align-items-center
-                  gap-3
-                "
+                style={{
+
+                  width: "52px",
+
+                  height: "52px",
+
+                  borderRadius: "14px",
+
+                  background: "#FFFFFF",
+
+                  display: "flex",
+
+                  alignItems: "center",
+
+                  justifyContent: "center",
+
+                  boxShadow:
+                    "0 6px 20px rgba(0,0,0,0.08)"
+                }}
               >
 
-                <div
-                  className="
-                    d-flex
-                    justify-content-center
-                    align-items-center
-                  "
-                  style={{
-
-                    width: "50px",
-
-                    height: "50px",
-
-                    borderRadius: "14px",
-
-                    background: "#FFFFFF",
-
-                    boxShadow:
-                      "0 6px 20px rgba(0,0,0,0.08)"
-                  }}
-                >
-
-                  <Bell
-                    size={22}
-                    color="#2563EB"
-                  />
-
-                </div>
+                <Bell
+                  size={22}
+                  color="#2563EB"
+                />
 
               </div>
 
             </div>
 
-            {/* ========================================= */}
-            {/* KPI CARDS */}
-            {/* ========================================= */}
+            {/* DASHBOARD CARDS */}
 
-            <div className="row g-4 mb-5">
+            <div className="row g-4">
 
-              {/* CARD 1 */}
+              <div className="col-md-3">
 
-              <div className="col-lg-3">
-
-                <div
-                  className="
-                    card
-                    p-4
-                    h-100
-                  "
-                  style={cardStyle}
-                >
+                <div style={cardStyle}>
 
                   <LayoutDashboard
-                    size={45}
+                    size={40}
                     color="#2563EB"
                   />
 
-                  <h6
-                    className="mt-4"
-                    style={{
-                      color: "#64748B"
-                    }}
-                  >
+                  <h6 className="mt-4">
 
                     Total Applications
 
                   </h6>
 
-                  <h2
+                  <h1
                     style={{
                       fontWeight: "800"
                     }}
                   >
 
-                    12,840
+                    124
 
-                  </h2>
-
-                  <p
-                    style={{
-                      color: "#16A34A"
-                    }}
-                  >
-
-                    +12% this month
-
-                  </p>
+                  </h1>
 
                 </div>
 
               </div>
 
-              {/* CARD 2 */}
+              <div className="col-md-3">
 
-              <div className="col-lg-3">
-
-                <div
-                  className="
-                    card
-                    p-4
-                    h-100
-                  "
-                  style={cardStyle}
-                >
+                <div style={cardStyle}>
 
                   <ShieldCheck
-                    size={45}
+                    size={40}
                     color="#16A34A"
                   />
 
-                  <h6
-                    className="mt-4"
-                    style={{
-                      color: "#64748B"
-                    }}
-                  >
+                  <h6 className="mt-4">
 
-                    Approval Rate
+                    Approved Loans
 
                   </h6>
 
-                  <h2
+                  <h1
                     style={{
-                      fontWeight: "800"
-                    }}
-                  >
-
-                    68%
-
-                  </h2>
-
-                  <p
-                    style={{
+                      fontWeight: "800",
                       color: "#16A34A"
                     }}
                   >
 
-                    AI optimized lending
+                    98
 
-                  </p>
+                  </h1>
 
                 </div>
 
               </div>
 
-              {/* CARD 3 */}
+              <div className="col-md-3">
 
-              <div className="col-lg-3">
+                <div style={cardStyle}>
 
-                <div
-                  className="
-                    card
-                    p-4
-                    h-100
-                  "
-                  style={cardStyle}
-                >
+                  <XCircle
+                    size={40}
+                    color="#DC2626"
+                  />
 
-                  <BrainCircuit
-                    size={45}
+                  <h6 className="mt-4">
+
+                    Rejected Loans
+
+                  </h6>
+
+                  <h1
+                    style={{
+                      fontWeight: "800",
+                      color: "#DC2626"
+                    }}
+                  >
+
+                    26
+
+                  </h1>
+
+                </div>
+
+              </div>
+
+              <div className="col-md-3">
+
+                <div style={cardStyle}>
+
+                  <TrendingUp
+                    size={40}
                     color="#9333EA"
                   />
 
-                  <h6
-                    className="mt-4"
-                    style={{
-                      color: "#64748B"
-                    }}
-                  >
+                  <h6 className="mt-4">
 
                     AI Accuracy
 
                   </h6>
 
-                  <h2
+                  <h1
                     style={{
-                      fontWeight: "800"
-                    }}
-                  >
-
-                    94.8%
-
-                  </h2>
-
-                  <p
-                    style={{
+                      fontWeight: "800",
                       color: "#9333EA"
                     }}
                   >
 
-                    SHAP Explainability
+                    94%
 
-                  </p>
-
-                </div>
-
-              </div>
-
-              {/* CARD 4 */}
-
-              <div className="col-lg-3">
-
-                <div
-                  className="
-                    card
-                    p-4
-                    h-100
-                  "
-                  style={cardStyle}
-                >
-
-                  <Activity
-                    size={45}
-                    color="#F59E0B"
-                  />
-
-                  <h6
-                    className="mt-4"
-                    style={{
-                      color: "#64748B"
-                    }}
-                  >
-
-                    Fraud Detection
-
-                  </h6>
-
-                  <h2
-                    style={{
-                      fontWeight: "800"
-                    }}
-                  >
-
-                    99.2%
-
-                  </h2>
-
-                  <p
-                    style={{
-                      color: "#F59E0B"
-                    }}
-                  >
-
-                    Real-time monitoring
-
-                  </p>
+                  </h1>
 
                 </div>
 
@@ -670,280 +520,94 @@ export default function AdminHome() {
 
             </div>
 
-            {/* ========================================= */}
-            {/* MAIN ANALYTICS SECTION */}
-            {/* ========================================= */}
+            {/* TABLE */}
 
-            <div className="row g-4">
+            <div
+              className="
+                card
+                border-0
+                mt-5
+              "
+              style={{
 
-              {/* LEFT PANEL */}
+                borderRadius: "24px",
 
-              <div className="col-lg-8">
+                padding: "30px",
 
-                <div
-                  className="
-                    card
-                    border-0
-                    p-5
-                  "
-                  style={cardStyle}
-                >
+                boxShadow:
+                  "0 10px 30px rgba(0,0,0,0.06)"
+              }}
+            >
 
-                  <div
-                    className="
-                      d-flex
-                      justify-content-between
-                      align-items-center
-                      flex-wrap
-                    "
-                  >
+              <h3
+                style={{
+                  fontWeight: "800"
+                }}
+              >
 
-                    <div>
+                Recent Applications
 
-                      <h2
-                        style={{
-                          fontWeight: "800"
-                        }}
-                      >
+              </h3>
 
-                        AI Portfolio Overview
+              <table className="table mt-4">
 
-                      </h2>
+                <thead>
 
-                      <p
-                        style={{
-                          color: "#64748B"
-                        }}
-                      >
+                  <tr>
 
-                        Enterprise-grade
-                        underwriting analytics
-                        and risk monitoring.
+                    <th>Name</th>
 
-                      </p>
+                    <th>Risk Score</th>
 
-                    </div>
+                    <th>Status</th>
 
-                    <button
-                      className="
-                        btn
-                        btn-primary
-                        d-flex
-                        align-items-center
-                        gap-2
-                      "
-                      style={{
+                    <th>Risk Tier</th>
 
-                        borderRadius:
-                          "14px",
+                  </tr>
 
-                        padding:
-                          "12px 20px"
-                      }}
+                </thead>
 
-                      onClick={() => {
+                <tbody>
 
-                        toast.success(
-                          "Opening Analytics Dashboard"
-                        )
+                  <tr>
 
-                        window.location.href =
-                          "/portfolio-dashboard"
-                      }}
-                    >
+                    <td>Sathwik</td>
 
-                      Open Analytics
+                    <td>780</td>
 
-                      <ArrowRight size={18} />
+                    <td>APPROVED</td>
 
-                    </button>
+                    <td>LOW RISK</td>
 
-                  </div>
+                  </tr>
 
-                  {/* PROGRESS */}
+                  <tr>
 
-                  <div className="mt-5">
+                    <td>Rahul</td>
 
-                    <div
-                      className="
-                        d-flex
-                        justify-content-between
-                        mb-2
-                      "
-                    >
+                    <td>620</td>
 
-                      <span>
+                    <td>CONDITIONAL</td>
 
-                        AI Portfolio Health
+                    <td>MEDIUM RISK</td>
 
-                      </span>
+                  </tr>
 
-                      <span>
+                  <tr>
 
-                        87%
+                    <td>Anjali</td>
 
-                      </span>
+                    <td>480</td>
 
-                    </div>
+                    <td>REJECTED</td>
 
-                    <div
-                      className="progress"
-                      style={{
-                        height: "14px",
-                        borderRadius: "20px"
-                      }}
-                    >
+                    <td>HIGH RISK</td>
 
-                      <div
-                        className="progress-bar"
+                  </tr>
 
-                        style={{
+                </tbody>
 
-                          width: "87%",
-
-                          background:
-                            "linear-gradient(to right, #2563EB, #16A34A)"
-                        }}
-                      ></div>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* RIGHT PANEL */}
-
-              <div className="col-lg-4">
-
-                <div
-                  className="
-                    card
-                    border-0
-                    p-4
-                    h-100
-                  "
-                  style={cardStyle}
-                >
-
-                  <h4
-                    style={{
-                      fontWeight: "800"
-                    }}
-                  >
-
-                    AI Risk Pulse
-
-                  </h4>
-
-                  <div
-                    className="
-                      text-center
-                      mt-5
-                    "
-                  >
-
-                    <h1
-                      style={{
-
-                        fontSize: "72px",
-
-                        fontWeight: "800",
-
-                        color: "#2563EB"
-                      }}
-                    >
-
-                      742
-
-                    </h1>
-
-                    <p
-                      style={{
-                        color: "#64748B"
-                      }}
-                    >
-
-                      Aggregate AI Score
-
-                    </p>
-
-                  </div>
-
-                  <div className="mt-5">
-
-                    <div
-                      className="
-                        d-flex
-                        justify-content-between
-                        mb-3
-                      "
-                    >
-
-                      <span>
-
-                        Low Risk
-
-                      </span>
-
-                      <span>
-
-                        62%
-
-                      </span>
-
-                    </div>
-
-                    <div
-                      className="
-                        d-flex
-                        justify-content-between
-                        mb-3
-                      "
-                    >
-
-                      <span>
-
-                        Medium Risk
-
-                      </span>
-
-                      <span>
-
-                        24%
-
-                      </span>
-
-                    </div>
-
-                    <div
-                      className="
-                        d-flex
-                        justify-content-between
-                      "
-                    >
-
-                      <span>
-
-                        High Risk
-
-                      </span>
-
-                      <span>
-
-                        14%
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
+              </table>
 
             </div>
 

@@ -1,7 +1,8 @@
 from django.db import models
 
-from django.contrib.auth.models import User
-
+from django.contrib.auth.models import (
+    User
+)
 
 # =========================================
 # LOAN APPLICATION MODEL
@@ -9,7 +10,9 @@ from django.contrib.auth.models import User
 
 class LoanApplication(models.Model):
 
+    # =========================================
     # EMPLOYMENT TYPES
+    # =========================================
 
     EMPLOYMENT_CHOICES = [
 
@@ -20,7 +23,9 @@ class LoanApplication(models.Model):
         ('FREELANCER', 'Freelancer'),
     ]
 
+    # =========================================
     # AI DECISION TYPES
+    # =========================================
 
     DECISION_CHOICES = [
 
@@ -31,7 +36,9 @@ class LoanApplication(models.Model):
         ('DECLINE', 'Decline'),
     ]
 
+    # =========================================
     # RISK TIERS
+    # =========================================
 
     RISK_TIER_CHOICES = [
 
@@ -41,10 +48,12 @@ class LoanApplication(models.Model):
 
         ('HIGH_RISK', 'High Risk'),
 
-        ('PENDING', 'Pending')
+        ('PENDING', 'Pending'),
     ]
 
+    # =========================================
     # APPLICATION STATUS
+    # =========================================
 
     STATUS_CHOICES = [
 
@@ -58,27 +67,20 @@ class LoanApplication(models.Model):
 
         ('ON_HOLD', 'On Hold'),
     ]
+
     # =========================================
-# REPAYMENT TRACKING
-# =========================================
+    # REPAYMENT STATUS
+    # =========================================
 
     REPAYMENT_STATUS_CHOICES = [
 
-    ('ACTIVE', 'Active'),
+        ('ACTIVE', 'Active'),
 
-    ('REPAID', 'Repaid'),
+        ('REPAID', 'Repaid'),
 
-    ('DEFAULTED', 'Defaulted'),
-]
+        ('DEFAULTED', 'Defaulted'),
+    ]
 
-    repayment_status = models.CharField(
-
-    max_length=50,
-
-    choices=REPAYMENT_STATUS_CHOICES,
-
-    default='ACTIVE'
-)
     # =========================================
     # USER RELATION
     # =========================================
@@ -87,7 +89,9 @@ class LoanApplication(models.Model):
 
         User,
 
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+
+        related_name="loan_applications"
     )
 
     # =========================================
@@ -100,7 +104,7 @@ class LoanApplication(models.Model):
 
     email = models.EmailField()
 
-    age = models.IntegerField()
+    age = models.PositiveIntegerField()
 
     employment_type = models.CharField(
 
@@ -113,13 +117,21 @@ class LoanApplication(models.Model):
     # FINANCIAL DETAILS
     # =========================================
 
-    monthly_income = models.FloatField()
+    monthly_income = models.FloatField(
+        default=0
+    )
 
-    loan_amount = models.FloatField()
+    loan_amount = models.FloatField(
+        default=0
+    )
 
-    existing_debt = models.FloatField()
+    existing_debt = models.FloatField(
+        default=0
+    )
 
-    credit_score = models.IntegerField()
+    credit_score = models.PositiveIntegerField(
+        default=0
+    )
 
     # =========================================
     # ALTERNATIVE DATA
@@ -182,12 +194,29 @@ class LoanApplication(models.Model):
         default='PENDING'
     )
 
+    repayment_status = models.CharField(
+
+        max_length=50,
+
+        choices=REPAYMENT_STATUS_CHOICES,
+
+        default='ACTIVE'
+    )
+
     # =========================================
     # EXPLAINABLE AI
     # =========================================
 
     explanations = models.JSONField(
-        default=list
+        default=list,
+        blank=True
+    )
+
+    shap_factors = models.JSONField(
+
+        default=list,
+
+        blank=True
     )
 
     # =========================================
@@ -198,21 +227,45 @@ class LoanApplication(models.Model):
         auto_now_add=True
     )
 
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
     # =========================================
-    # ORDERING
+    # META
     # =========================================
 
     class Meta:
 
         ordering = ['-created_at']
 
+        indexes = [
+
+            models.Index(
+                fields=['status']
+            ),
+
+            models.Index(
+                fields=['risk_tier']
+            ),
+
+            models.Index(
+                fields=['decision']
+            ),
+        ]
+
     # =========================================
-    # STRING
+    # STRING REPRESENTATION
     # =========================================
 
     def __str__(self):
 
-        return self.full_name
+        return (
+
+            f"{self.full_name} "
+
+            f"- {self.loan_amount}"
+        )
 
 
 # =========================================
@@ -225,36 +278,50 @@ class AuditLog(models.Model):
 
         LoanApplication,
 
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+
+        related_name="audit_logs"
     )
 
+    # =========================================
     # MODEL VERSION
+    # =========================================
 
     model_version = models.CharField(
         max_length=100
     )
 
+    # =========================================
     # INPUT SNAPSHOT
+    # =========================================
 
     input_snapshot = models.JSONField()
 
+    # =========================================
     # OUTPUT SNAPSHOT
+    # =========================================
 
     prediction_output = models.JSONField()
 
+    # =========================================
     # TIMESTAMP
+    # =========================================
 
     created_at = models.DateTimeField(
         auto_now_add=True
     )
 
-    # ORDERING
+    # =========================================
+    # META
+    # =========================================
 
     class Meta:
 
         ordering = ['-created_at']
 
+    # =========================================
     # STRING
+    # =========================================
 
     def __str__(self):
 
@@ -264,13 +331,3 @@ class AuditLog(models.Model):
 
             f"{self.application.full_name}"
         )
-# =========================================
-# SHAP FACTORS
-# =========================================
-
-shap_factors = models.JSONField(
-
-    default=list,
-
-    blank=True
-)

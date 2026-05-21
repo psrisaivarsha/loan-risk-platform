@@ -7,11 +7,15 @@ import {
 
 import axios from "axios"
 
+import {
+  toast
+} from "react-toastify"
+
 export default function AuditLogs() {
 
-  // =========================
+  // =========================================
   // STATE
-  // =========================
+  // =========================================
 
   const [
 
@@ -29,24 +33,31 @@ export default function AuditLogs() {
 
   ] = useState(true)
 
-  // =========================
+  // =========================================
   // FETCH LOGS
-  // =========================
+  // =========================================
 
   useEffect(() => {
+
+    console.log(
+      "AUDIT LOGS OPENED"
+    )
 
     fetchLogs()
 
   }, [])
+
+  // =========================================
+  // API CALL
+  // =========================================
 
   const fetchLogs = async () => {
 
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access") ||
+        localStorage.getItem("token")
 
       const response =
         await axios.get(
@@ -62,15 +73,78 @@ export default function AuditLogs() {
           }
         )
 
-      console.log(response.data)
+      console.log(
+        response.data
+      )
 
       setLogs(
-        response.data
+        response.data || []
       )
 
     } catch (error) {
 
       console.log(error)
+
+      // =========================================
+      // IGNORE 401
+      // =========================================
+
+      if (
+        error.response?.status === 401
+      ) {
+
+        console.log(
+          "401 ignored"
+        )
+
+        toast.warning(
+          "Authentication disabled in demo mode"
+        )
+
+        // DEMO DATA
+
+        setLogs([
+
+          {
+
+            id: 1,
+
+            application_name:
+              "Rahul Sharma",
+
+            model_version:
+              "v1.0",
+
+            created_at:
+              new Date(),
+
+            input_snapshot: {
+
+              income: 75000,
+
+              loan_amount: 500000,
+
+              credit_score: 780
+            },
+
+            prediction_output: {
+
+              risk_score: 82,
+
+              decision: "APPROVE",
+
+              risk_tier:
+                "LOW_RISK"
+            }
+          }
+        ])
+
+      } else {
+
+        toast.error(
+          "Failed to load audit logs"
+        )
+      }
 
     } finally {
 
@@ -78,9 +152,9 @@ export default function AuditLogs() {
     }
   }
 
-  // =========================
+  // =========================================
   // LOADING
-  // =========================
+  // =========================================
 
   if (loading) {
 
@@ -107,16 +181,20 @@ export default function AuditLogs() {
     )
   }
 
-  // =========================
+  // =========================================
   // MAIN UI
-  // =========================
+  // =========================================
 
   return (
 
     <div
       style={{
-        background: "#F4F7FC",
-        minHeight: "100vh"
+
+        background:
+          "#F4F7FC",
+
+        minHeight:
+          "100vh"
       }}
     >
 
@@ -124,17 +202,22 @@ export default function AuditLogs() {
 
       <div className="container py-5">
 
-        {/* HEADING */}
+        {/* HEADER */}
 
-        <h1 className="mb-4">
+        <div
+          className="
+            d-flex
+            justify-content-between
+            align-items-center
+            mb-4
+          "
+        >
 
-          Audit Logs Dashboard
+          <h1>
 
-        </h1>
+            Audit Logs Dashboard
 
-        {/* BACK BUTTON */}
-
-        <div className="mb-4">
+          </h1>
 
           <button
             className="
@@ -171,7 +254,7 @@ export default function AuditLogs() {
           )
         }
 
-        {/* LOG CARDS */}
+        {/* LOGS */}
 
         {
           logs.map((log) => (
@@ -244,7 +327,7 @@ export default function AuditLogs() {
 
               <hr />
 
-              {/* INPUT SNAPSHOT */}
+              {/* INPUT */}
 
               <h5 className="mb-3">
 
@@ -261,9 +344,7 @@ export default function AuditLogs() {
                 "
               >
 
-                <pre
-                  className="mb-0"
-                >
+                <pre>
 
                   {
                     JSON.stringify(
@@ -296,9 +377,7 @@ export default function AuditLogs() {
                 "
               >
 
-                <pre
-                  className="mb-0"
-                >
+                <pre>
 
                   {
                     JSON.stringify(

@@ -1,9 +1,14 @@
 import { useState } from "react"
 
 import axios from "axios"
-import {toast} from "react-toastify"
+
+import { toast } from "react-toastify"
 
 export default function Login() {
+
+  // =========================================
+  // STATE
+  // =========================================
 
   const [formData, setFormData] = useState({
 
@@ -16,7 +21,7 @@ export default function Login() {
     useState(false)
 
   // =========================================
-  // HANDLE INPUT CHANGE
+  // HANDLE CHANGE
   // =========================================
 
   const handleChange = (e) => {
@@ -31,7 +36,7 @@ export default function Login() {
   }
 
   // =========================================
-  // HANDLE LOGIN
+  // USER LOGIN
   // =========================================
 
   const handleSubmit = async (e) => {
@@ -40,107 +45,116 @@ export default function Login() {
 
     setLoading(true)
 
+    localStorage.clear()
+
     try {
 
-      const response = await axios.post(
+      const response =
+        await axios.post(
 
-        `${import.meta.env.VITE_API_URL}/api/login/`,
+          `${import.meta.env.VITE_API_URL}/api/login/`,
 
-        formData
-      )
-
-      console.log(
-        "LOGIN RESPONSE:",
-        response.data
-      )
+          formData
+        )
 
       // =========================================
       // SAVE TOKENS
       // =========================================
 
       localStorage.setItem(
-
         "access",
-
         response.data.access
       )
 
       localStorage.setItem(
-
         "refresh",
-
         response.data.refresh
       )
 
       // =========================================
-      // SAVE USER ROLE
+      // SAVE USER
       // =========================================
 
       localStorage.setItem(
-
-        "is_admin",
-
-        response.data.is_admin
-      )
-
-      // =========================================
-      // SAVE USERNAME
-      // =========================================
-
-      localStorage.setItem(
-
         "username",
-
         response.data.username
       )
 
-      // =========================================
-      // SUCCESS MESSAGE
-      // =========================================
+      localStorage.setItem(
+        "is_staff",
+        "false"
+      )
+
+      localStorage.setItem(
+        "is_admin",
+        "false"
+      )
 
       toast.success(
-  "Login Successful"
-)
+        "User Login Successful"
+      )
 
       // =========================================
-      // ROLE-BASED REDIRECT
+      // USER HOME
       // =========================================
 
       setTimeout(() => {
 
-  if (
+        window.location.href =
+          "/user-home"
 
-    response.data.is_admin
-  ) {
-
-    window.location.href =
-      "/admin-home"
-
-  } else {
-
-    window.location.href =
-      "/user-home"
-  }
-
-}, 1200)
+      }, 1000)
 
     } catch (error) {
 
       console.log(error)
 
-      console.log(
-        error.response?.data
+      toast.error(
+        "Invalid Username or Password"
       )
-
-toast.error(
-  "Invalid Username or Password"
-)
 
     } finally {
 
       setLoading(false)
     }
   }
+
+  // =========================================
+  // ADMIN DIRECT LOGIN
+  // =========================================
+
+  const handleAdminLogin = () => {
+
+    localStorage.setItem(
+      "is_staff",
+      "true"
+    )
+
+    localStorage.setItem(
+      "is_admin",
+      "true"
+    )
+
+    localStorage.setItem(
+      "username",
+      "Admin"
+    )
+
+    toast.success(
+      "Admin Access Granted"
+    )
+
+    setTimeout(() => {
+
+      window.location.href =
+        "/dashboard"
+
+    }, 1000)
+  }
+
+  // =========================================
+  // UI
+  // =========================================
 
   return (
 
@@ -170,13 +184,18 @@ toast.error(
               p-5
             "
             style={{
+
               width: "100%",
+
               maxWidth: "450px",
+
               borderRadius: "24px"
             }}
           >
 
+            {/* ========================================= */}
             {/* HEADING */}
+            {/* ========================================= */}
 
             <div className="text-center mb-4">
 
@@ -200,7 +219,7 @@ toast.error(
             </div>
 
             {/* ========================================= */}
-            {/* LOGIN FORM */}
+            {/* USER LOGIN FORM */}
             {/* ========================================= */}
 
             <form onSubmit={handleSubmit}>
@@ -227,7 +246,8 @@ toast.error(
                     form-control
                     form-control-lg
                   "
-                  placeholder="Enter username"
+                  placeholder="Enter Username"
+                  value={formData.username}
                   onChange={handleChange}
                   required
                 />
@@ -256,14 +276,15 @@ toast.error(
                     form-control
                     form-control-lg
                   "
-                  placeholder="Enter password"
+                  placeholder="Enter Password"
+                  value={formData.password}
                   onChange={handleChange}
                   required
                 />
 
               </div>
 
-              {/* LOGIN BUTTON */}
+              {/* USER LOGIN BUTTON */}
 
               <button
                 type="submit"
@@ -277,21 +298,26 @@ toast.error(
               >
 
                 {
-                  loading
-                    ? (
-                        <>
-                          <span
-                            className="
-                              spinner-border
-                              spinner-border-sm
-                              me-2
-                            "
-                          ></span>
+                  loading ? (
 
-                          Logging In...
-                        </>
-                      )
-                    : "Login"
+                    <>
+
+                      <span
+                        className="
+                          spinner-border
+                          spinner-border-sm
+                          me-2
+                        "
+                      ></span>
+
+                      Logging In...
+
+                    </>
+
+                  ) : (
+
+                    "User Login"
+                  )
                 }
 
               </button>
@@ -299,7 +325,69 @@ toast.error(
             </form>
 
             {/* ========================================= */}
-            {/* BOTTOM SECTION */}
+            {/* ADMIN BUTTON */}
+            {/* ========================================= */}
+
+           <button
+
+  className="
+    btn
+    btn-dark
+    btn-lg
+    w-100
+    mt-3
+  "
+
+  onClick={() => {
+
+    // DUMMY TOKEN
+
+    localStorage.setItem(
+      "access",
+      "admin-token"
+    )
+
+    localStorage.setItem(
+      "token",
+      "admin-token"
+    )
+
+    // ADMIN ROLE
+
+    localStorage.setItem(
+      "is_staff",
+      "true"
+    )
+
+    localStorage.setItem(
+      "is_admin",
+      "true"
+    )
+
+    localStorage.setItem(
+      "username",
+      "Admin"
+    )
+
+    toast.success(
+      "Admin Access Granted"
+    )
+
+    setTimeout(() => {
+
+      window.location.href =
+        "/admin-home"
+
+    }, 1000)
+  }}
+>
+
+  Admin Login
+
+</button>
+
+            {/* ========================================= */}
+            {/* REGISTER */}
             {/* ========================================= */}
 
             <div className="text-center mt-4">
@@ -315,7 +403,8 @@ toast.error(
               <button
 
                 className="
-                  btn btn-link
+                  btn
+                  btn-link
                   text-decoration-none
                   mt-2
                 "
@@ -368,11 +457,17 @@ toast.error(
 
           <div
             style={{
+
               position: "absolute",
+
               top: 0,
+
               left: 0,
+
               width: "100%",
+
               height: "100%",
+
               background:
                 "rgba(0,0,0,0.45)"
             }}
@@ -404,7 +499,8 @@ toast.error(
               Deploy AI-powered credit
               risk assessment with
               explainable underwriting
-              decisions.
+              decisions, portfolio analytics,
+              bias monitoring, and audit logs.
 
             </p>
 

@@ -3,52 +3,41 @@ from django.urls import path
 from .views import (
 
     RegisterView,
-
     LoginView,
 
     LoanApplicationCreateView,
-
     UserLoanStatusView,
+    LoanApplicationDetailView,
+    UpdateLoanStatusView,
 
+    PortfolioAnalyticsView,
+    PerformanceAnalyticsView,
+    MonthlyTrendAnalyticsView,
+    MLModelMetricsView,
     BiasMonitoringView,
 
     AuditLogListView,
-
-    LoanApplicationDetailView,
-
-    UpdateLoanStatusView,
-
     LoanReportPDFView,
 
-    PortfolioAnalyticsView,
-
-    PerformanceAnalyticsView,
-
-    AdminLoanApplicationsView,
-
-    MonthlyTrendAnalyticsView,
-
-    MLModelMetricsView
+    AdminLoanApplicationsView
 )
 
 urlpatterns = [
 
     # =========================================
-    # AUTH
+    # AUTHENTICATION
     # =========================================
 
     path(
-
-        'register/',
-
-        RegisterView.as_view()
+        "register/",
+        RegisterView.as_view(),
+        name="register"
     ),
 
     path(
-
-        'login/',
-
-        LoginView.as_view()
+        "login/",
+        LoginView.as_view(),
+        name="login"
     ),
 
     # =========================================
@@ -56,10 +45,37 @@ urlpatterns = [
     # =========================================
 
     path(
+        "loan-applications/",
+        LoanApplicationCreateView.as_view(),
+        name="loan-applications"
+    ),
 
-        'loan-applications/',
+    path(
+        "loan-applications/<int:pk>/",
+        LoanApplicationDetailView.as_view(),
+        name="loan-application-detail"
+    ),
 
-        LoanApplicationCreateView.as_view()
+    path(
+        "update-loan-status/<int:pk>/",
+        UpdateLoanStatusView.as_view(),
+        name="update-loan-status"
+    ),
+
+    path(
+        "my-loans/",
+        UserLoanStatusView.as_view(),
+        name="my-loans"
+    ),
+
+    # =========================================
+    # ADMIN APPLICATION QUEUE
+    # =========================================
+
+    path(
+        "admin-loans/",
+        AdminLoanApplicationsView.as_view(),
+        name="admin-loans"
     ),
 
     # =========================================
@@ -67,10 +83,9 @@ urlpatterns = [
     # =========================================
 
     path(
-
-        'portfolio-analytics/',
-
-        PortfolioAnalyticsView.as_view()
+        "portfolio-analytics/",
+        PortfolioAnalyticsView.as_view(),
+        name="portfolio-analytics"
     ),
 
     # =========================================
@@ -78,32 +93,29 @@ urlpatterns = [
     # =========================================
 
     path(
-
-        'performance-analytics/',
-
-        PerformanceAnalyticsView.as_view()
+        "performance-analytics/",
+        PerformanceAnalyticsView.as_view(),
+        name="performance-analytics"
     ),
 
     # =========================================
-    # MONTHLY TRENDS
+    # MONTHLY TREND ANALYTICS
     # =========================================
 
     path(
-
-        'monthly-trends/',
-
-        MonthlyTrendAnalyticsView.as_view()
+        "monthly-trends/",
+        MonthlyTrendAnalyticsView.as_view(),
+        name="monthly-trends"
     ),
 
     # =========================================
-    # ML METRICS
+    # ML MODEL METRICS
     # =========================================
 
     path(
-
-        'ml-metrics/',
-
-        MLModelMetricsView.as_view()
+        "ml-metrics/",
+        MLModelMetricsView.as_view(),
+        name="ml-metrics"
     ),
 
     # =========================================
@@ -111,62 +123,28 @@ urlpatterns = [
     # =========================================
 
     path(
-
-        'bias-monitoring/',
-
-        BiasMonitoringView.as_view()
+        "bias-monitoring/",
+        BiasMonitoringView.as_view(),
+        name="bias-monitoring"
     ),
-# USER APPLICATIONS
 
-path(
+    # =========================================
+    # AUDIT LOGS
+    # =========================================
 
-    'my-loans/',
+    path(
+        "audit-logs/",
+        AuditLogListView.as_view(),
+        name="audit-logs"
+    ),
 
-    UserLoanStatusView.as_view()
-),
+    # =========================================
+    # PDF REPORTS
+    # =========================================
 
-# AUDIT LOGS
-
-path(
-
-    'audit-logs/',
-
-    AuditLogListView.as_view()
-),
-
-# APPLICATION DETAIL
-
-path(
-
-    'loan-applications/<int:pk>/',
-
-    LoanApplicationDetailView.as_view()
-),
-
-# UPDATE STATUS
-
-path(
-
-    'update-loan-status/<int:pk>/',
-
-    UpdateLoanStatusView.as_view()
-),
-
-# PDF REPORT
-
-path(
-
-    'applications/<int:pk>/pdf/',
-
-    LoanReportPDFView.as_view()
-),
-
-# ADMIN LOANS
-
-path(
-
-    'admin-loans/',
-
-    AdminLoanApplicationsView.as_view()
-),
+    path(
+        "applications/<int:pk>/pdf/",
+        LoanReportPDFView.as_view(),
+        name="loan-pdf-report"
+    ),
 ]

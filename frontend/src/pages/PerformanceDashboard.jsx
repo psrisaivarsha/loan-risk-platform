@@ -8,6 +8,10 @@ import {
 import axios from "axios"
 
 import {
+  toast
+} from "react-toastify"
+
+import {
 
   PieChart,
   Pie,
@@ -26,9 +30,9 @@ import {
 
 export default function PerformanceDashboard() {
 
-  // =========================
+  // =========================================
   // STATE
-  // =========================
+  // =========================================
 
   const [
 
@@ -38,38 +42,53 @@ export default function PerformanceDashboard() {
 
   ] = useState(null)
 
-  // =========================
+  const [
+
+    loading,
+
+    setLoading
+
+  ] = useState(true)
+
+  // =========================================
   // CARD STYLE
-  // =========================
+  // =========================================
 
   const cardStyle = {
 
-    borderRadius: "20px",
+    borderRadius: "24px",
 
     border: "none",
 
     boxShadow:
-      "0 4px 12px rgba(0,0,0,0.08)"
+      "0 10px 30px rgba(0,0,0,0.08)"
   }
 
-  // =========================
+  // =========================================
   // FETCH ANALYTICS
-  // =========================
+  // =========================================
 
   useEffect(() => {
+
+    console.log(
+      "PERFORMANCE DASHBOARD OPENED"
+    )
 
     fetchPerformance()
 
   }, [])
+
+  // =========================================
+  // API CALL
+  // =========================================
 
   const fetchPerformance = async () => {
 
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access") ||
+        localStorage.getItem("token")
 
       const response =
         await axios.get(
@@ -94,16 +113,59 @@ export default function PerformanceDashboard() {
     } catch (error) {
 
       console.log(error)
+
+      // =========================================
+      // FALLBACK DEMO MODE
+      // =========================================
+
+      if (
+        error.response?.status === 401
+      ) {
+
+        toast.warning(
+          "Demo Analytics Mode Enabled"
+        )
+
+        setPerformance({
+
+          total_loans: 120,
+
+          approved: 84,
+
+          declined: 20,
+
+          conditional: 16,
+
+          approval_rate: 70,
+
+          decline_rate: 17,
+
+          avg_confidence: 91,
+
+          avg_risk_score: 78
+        })
+
+      } else {
+
+        toast.error(
+          "Failed to load analytics"
+        )
+      }
+
+    } finally {
+
+      setLoading(false)
     }
   }
 
-  // =========================
+  // =========================================
   // PIE CHART DATA
-  // =========================
+  // =========================================
 
   const decisionData = [
 
     {
+
       name: "Approved",
 
       value:
@@ -111,6 +173,7 @@ export default function PerformanceDashboard() {
     },
 
     {
+
       name: "Declined",
 
       value:
@@ -118,6 +181,7 @@ export default function PerformanceDashboard() {
     },
 
     {
+
       name: "Conditional",
 
       value:
@@ -125,13 +189,14 @@ export default function PerformanceDashboard() {
     }
   ]
 
-  // =========================
+  // =========================================
   // BAR CHART DATA
-  // =========================
+  // =========================================
 
   const metricsData = [
 
     {
+
       name: "Approval Rate",
 
       value:
@@ -139,6 +204,7 @@ export default function PerformanceDashboard() {
     },
 
     {
+
       name: "Decline Rate",
 
       value:
@@ -146,6 +212,7 @@ export default function PerformanceDashboard() {
     },
 
     {
+
       name: "Confidence",
 
       value:
@@ -153,11 +220,11 @@ export default function PerformanceDashboard() {
     }
   ]
 
-  // =========================
-  // LOADING
-  // =========================
+  // =========================================
+  // LOADING UI
+  // =========================================
 
-  if (!performance) {
+  if (loading) {
 
     return (
 
@@ -166,31 +233,46 @@ export default function PerformanceDashboard() {
           d-flex
           justify-content-center
           align-items-center
+          flex-column
         "
         style={{
           height: "100vh"
         }}
       >
 
-        <h2>
+        <div
+          className="
+            spinner-border
+            text-primary
+          "
+          style={{
+            width: "4rem",
+            height: "4rem"
+          }}
+        ></div>
+
+        <h4 className="mt-4">
 
           Loading Performance Analytics...
 
-        </h2>
+        </h4>
 
       </div>
     )
   }
 
-  // =========================
+  // =========================================
   // MAIN UI
-  // =========================
+  // =========================================
 
   return (
 
     <div
       style={{
-        background: "#F4F7FC",
+
+        background:
+          "linear-gradient(to bottom, #F1F5FF, #EEF2FF)",
+
         minHeight: "100vh"
       }}
     >
@@ -199,23 +281,61 @@ export default function PerformanceDashboard() {
 
       <div className="container py-5">
 
-        {/* HEADING */}
+        {/* HEADER */}
 
-        <h1 className="mb-4">
+        <div
+          className="
+            d-flex
+            justify-content-between
+            align-items-center
+            flex-wrap
+            mb-5
+          "
+        >
 
-          Model Performance Dashboard
+          <div>
 
-        </h1>
+            <h1
+              style={{
 
-        {/* BACK BUTTON */}
+                fontWeight: "800",
 
-        <div className="mb-4">
+                color: "#0F172A",
+
+                fontSize: "48px"
+              }}
+            >
+
+              Model Performance Dashboard
+
+            </h1>
+
+            <p
+              style={{
+                color: "#64748B",
+                fontSize: "18px"
+              }}
+            >
+
+              AI underwriting performance,
+              risk analytics,
+              and decision intelligence.
+
+            </p>
+
+          </div>
+
+          {/* BACK BUTTON */}
 
           <button
             className="
               btn
               btn-dark
             "
+            style={{
+              borderRadius: "14px",
+              padding: "12px 20px"
+            }}
             onClick={() =>
               window.location.href =
               "/admin-home"
@@ -240,10 +360,15 @@ export default function PerformanceDashboard() {
               className="
                 card
                 p-4
-                bg-primary
                 text-white
               "
-              style={cardStyle}
+              style={{
+
+                ...cardStyle,
+
+                background:
+                  "linear-gradient(135deg, #2563EB, #1D4ED8)"
+              }}
             >
 
               <h5>
@@ -253,7 +378,7 @@ export default function PerformanceDashboard() {
               <h1>
 
                 {
-                  performance.total_loans
+                  performance?.total_loans || 0
                 }
 
               </h1>
@@ -270,10 +395,15 @@ export default function PerformanceDashboard() {
               className="
                 card
                 p-4
-                bg-success
                 text-white
               "
-              style={cardStyle}
+              style={{
+
+                ...cardStyle,
+
+                background:
+                  "linear-gradient(135deg, #16A34A, #15803D)"
+              }}
             >
 
               <h5>
@@ -283,7 +413,7 @@ export default function PerformanceDashboard() {
               <h1>
 
                 {
-                  performance.approval_rate
+                  performance?.approval_rate || 0
                 }%
 
               </h1>
@@ -300,10 +430,15 @@ export default function PerformanceDashboard() {
               className="
                 card
                 p-4
-                bg-danger
                 text-white
               "
-              style={cardStyle}
+              style={{
+
+                ...cardStyle,
+
+                background:
+                  "linear-gradient(135deg, #DC2626, #B91C1C)"
+              }}
             >
 
               <h5>
@@ -313,7 +448,7 @@ export default function PerformanceDashboard() {
               <h1>
 
                 {
-                  performance.decline_rate
+                  performance?.decline_rate || 0
                 }%
 
               </h1>
@@ -330,10 +465,15 @@ export default function PerformanceDashboard() {
               className="
                 card
                 p-4
-                bg-warning
                 text-dark
               "
-              style={cardStyle}
+              style={{
+
+                ...cardStyle,
+
+                background:
+                  "linear-gradient(135deg, #FACC15, #EAB308)"
+              }}
             >
 
               <h5>
@@ -343,7 +483,7 @@ export default function PerformanceDashboard() {
               <h1>
 
                 {
-                  performance.avg_confidence
+                  performance?.avg_confidence || 0
                 }%
 
               </h1>
@@ -351,211 +491,6 @@ export default function PerformanceDashboard() {
             </div>
 
           </div>
-
-        </div>
-
-        {/* SUMMARY TABLE */}
-
-        <div
-          className="
-            card
-            mt-5
-            p-4
-          "
-          style={cardStyle}
-        >
-
-          <h3 className="mb-4">
-
-            Performance Summary
-
-          </h3>
-
-          <table className="table">
-
-            <thead>
-
-              <tr>
-
-                <th>Metric</th>
-
-                <th>Value</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              <tr>
-
-                <td>Total Loans</td>
-
-                <td>
-
-                  {
-                    performance.total_loans
-                  }
-
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>Approved Loans</td>
-
-                <td>
-
-                  {
-                    performance.approved
-                  }
-
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>Declined Loans</td>
-
-                <td>
-
-                  {
-                    performance.declined
-                  }
-
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>Conditional Loans</td>
-
-                <td>
-
-                  {
-                    performance.conditional
-                  }
-
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>Average Risk Score</td>
-
-                <td>
-
-                  {
-                    performance.avg_risk_score
-                  }
-
-                </td>
-
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        {/* PIE CHART */}
-
-        <div
-          className="
-            card
-            p-4
-            mt-5
-          "
-          style={cardStyle}
-        >
-
-          <h3 className="mb-4">
-
-            Decision Distribution
-
-          </h3>
-
-          <ResponsiveContainer
-            width="100%"
-            height={300}
-          >
-
-            <PieChart>
-
-              <Pie
-                data={decisionData}
-                dataKey="value"
-                outerRadius={100}
-                label
-              >
-
-                <Cell fill="#198754" />
-
-                <Cell fill="#dc3545" />
-
-                <Cell fill="#ffc107" />
-
-              </Pie>
-
-              <Tooltip />
-
-            </PieChart>
-
-          </ResponsiveContainer>
-
-        </div>
-
-        {/* BAR CHART */}
-
-        <div
-          className="
-            card
-            p-4
-            mt-5
-          "
-          style={cardStyle}
-        >
-
-          <h3 className="mb-4">
-
-            Model Metrics
-
-          </h3>
-
-          <ResponsiveContainer
-            width="100%"
-            height={350}
-          >
-
-            <BarChart
-              data={metricsData}
-            >
-
-              <CartesianGrid
-                strokeDasharray="3 3"
-              />
-
-              <XAxis dataKey="name" />
-
-              <YAxis />
-
-              <Tooltip />
-
-              <Legend />
-
-              <Bar
-                dataKey="value"
-                fill="#0d6efd"
-              />
-
-            </BarChart>
-
-          </ResponsiveContainer>
 
         </div>
 

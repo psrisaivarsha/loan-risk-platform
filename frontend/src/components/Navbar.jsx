@@ -2,7 +2,8 @@ import {
   Bell,
   ShieldCheck,
   Settings,
-  LogOut
+  LogOut,
+  LayoutDashboard
 } from "lucide-react"
 
 import {
@@ -11,15 +12,26 @@ import {
 
 export default function Navbar() {
 
+  // =========================================
+  // USER DATA
+  // =========================================
+
   const username =
-    localStorage.getItem(
-      "username"
-    )
+    localStorage.getItem("username") || "User"
+
+  // =========================================
+  // ADMIN CHECK
+  // =========================================
 
   const isAdmin =
-    localStorage.getItem(
-      "is_admin"
-    ) === "true"
+    localStorage.getItem("is_staff") === "true"
+
+  // =========================================
+  // USER INITIAL
+  // =========================================
+
+  const userInitial =
+    username.charAt(0).toUpperCase()
 
   // =========================================
   // LOGOUT
@@ -37,7 +49,7 @@ export default function Navbar() {
 
       window.location.href = "/"
 
-    }, 1200)
+    }, 1000)
   }
 
   return (
@@ -172,6 +184,40 @@ export default function Navbar() {
         "
       >
 
+        {/* ADMIN DASHBOARD */}
+
+        {
+          isAdmin && (
+
+            <button
+
+              className="
+                btn
+                btn-primary
+                d-flex
+                align-items-center
+                gap-2
+              "
+
+              style={{
+                borderRadius: "14px"
+              }}
+
+              onClick={() => {
+
+                window.location.href =
+                  "/dashboard"
+              }}
+            >
+
+              <LayoutDashboard size={18} />
+
+              Dashboard
+
+            </button>
+          )
+        }
+
         {/* NOTIFICATIONS */}
 
         <div
@@ -194,9 +240,7 @@ export default function Navbar() {
             border:
               "1px solid rgba(255,255,255,0.04)",
 
-            cursor: "pointer",
-
-            transition: "0.3s"
+            cursor: "pointer"
           }}
 
           onClick={() => {
@@ -236,9 +280,7 @@ export default function Navbar() {
             border:
               "1px solid rgba(255,255,255,0.04)",
 
-            cursor: "pointer",
-
-            transition: "0.3s"
+            cursor: "pointer"
           }}
 
           onClick={() => {
@@ -302,18 +344,12 @@ export default function Navbar() {
 
               fontSize: "18px",
 
-              textTransform:
-                "uppercase",
-
               boxShadow:
                 "0 5px 16px rgba(37,99,235,0.35)"
             }}
           >
 
-            {
-              username
-                ?.charAt(0)
-            }
+            {userInitial}
 
           </div>
 
@@ -356,48 +392,43 @@ export default function Navbar() {
 
         </div>
 
-        {/* USER LOGOUT */}
+        {/* LOGOUT */}
 
-        {
-          !isAdmin && (
+        <button
 
-            <button
+          className="
+            btn
+            text-white
+            fw-semibold
+            border-0
+            d-flex
+            align-items-center
+            gap-2
+          "
 
-              className="
-                btn
-                text-white
-                fw-semibold
-                border-0
-                d-flex
-                align-items-center
-                gap-2
-              "
+          style={{
 
-              style={{
+            background:
+              "linear-gradient(135deg, #EF4444, #DC2626)",
 
-                background:
-                  "linear-gradient(135deg, #EF4444, #DC2626)",
+            borderRadius:
+              "14px",
 
-                borderRadius:
-                  "14px",
+            padding:
+              "12px 20px",
 
-                padding:
-                  "12px 20px",
+            boxShadow:
+              "0 8px 20px rgba(239,68,68,0.25)"
+          }}
 
-                boxShadow:
-                  "0 8px 20px rgba(239,68,68,0.25)"
-              }}
+          onClick={handleLogout}
+        >
 
-              onClick={handleLogout}
-            >
+          <LogOut size={18} />
 
-              <LogOut size={18} />
+          Logout
 
-              Logout
-
-            </button>
-          )
-        }
+        </button>
 
       </div>
 

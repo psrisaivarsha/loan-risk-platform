@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 
 import {
+
   ShieldCheck,
   BadgeDollarSign,
   BarChart3,
@@ -9,16 +10,44 @@ import {
   TrendingUp,
   Activity,
   CircleDollarSign
+
 } from "lucide-react"
 
 import Navbar from "../components/Navbar"
 
 export default function UserHome() {
 
+  // =====================================
+  // USERNAME
+  // =====================================
+
   const username =
+
     localStorage.getItem(
       "username"
-    )
+    ) || "User"
+
+  // =====================================
+  // CARD STYLE
+  // =====================================
+
+  const cardStyle = {
+
+    borderRadius: "24px",
+
+    padding: "28px",
+
+    background: "#FFFFFF",
+
+    boxShadow:
+      "0 10px 30px rgba(0,0,0,0.06)",
+
+    transition: "0.3s"
+  }
+
+  // =====================================
+  // MAIN UI
+  // =====================================
 
   return (
 
@@ -158,6 +187,8 @@ export default function UserHome() {
               "
             >
 
+              {/* APPLY LOAN */}
+
               <Link
                 to="/loan-form"
                 className="
@@ -193,6 +224,8 @@ export default function UserHome() {
                 <ArrowRight size={20} />
 
               </Link>
+
+              {/* VIEW APPLICATIONS */}
 
               <Link
                 to="/my-applications"
@@ -258,6 +291,7 @@ export default function UserHome() {
               <img
                 src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=1200&q=80"
                 alt="Fintech Dashboard"
+                className="img-fluid"
                 style={{
 
                   width:
@@ -293,23 +327,7 @@ export default function UserHome() {
                 border-0
                 h-100
               "
-              style={{
-
-                borderRadius:
-                  "24px",
-
-                padding:
-                  "28px",
-
-                background:
-                  "#FFFFFF",
-
-                boxShadow:
-                  "0 10px 30px rgba(0,0,0,0.06)",
-
-                transition:
-                  "0.3s"
-              }}
+              style={cardStyle}
             >
 
               <ShieldCheck
@@ -374,20 +392,7 @@ export default function UserHome() {
                 border-0
                 h-100
               "
-              style={{
-
-                borderRadius:
-                  "24px",
-
-                padding:
-                  "28px",
-
-                background:
-                  "#FFFFFF",
-
-                boxShadow:
-                  "0 10px 30px rgba(0,0,0,0.06)"
-              }}
+              style={cardStyle}
             >
 
               <CircleDollarSign
@@ -452,20 +457,7 @@ export default function UserHome() {
                 border-0
                 h-100
               "
-              style={{
-
-                borderRadius:
-                  "24px",
-
-                padding:
-                  "28px",
-
-                background:
-                  "#FFFFFF",
-
-                boxShadow:
-                  "0 10px 30px rgba(0,0,0,0.06)"
-              }}
+              style={cardStyle}
             >
 
               <TrendingUp
@@ -530,20 +522,7 @@ export default function UserHome() {
                 border-0
                 h-100
               "
-              style={{
-
-                borderRadius:
-                  "24px",
-
-                padding:
-                  "28px",
-
-                background:
-                  "#FFFFFF",
-
-                boxShadow:
-                  "0 10px 30px rgba(0,0,0,0.06)"
-              }}
+              style={cardStyle}
             >
 
               <BrainCircuit
@@ -804,11 +783,15 @@ export default function UserHome() {
         </div>
 
         {/* ===================================== */}
-        {/* AI INSIGHTS SECTION */}
+        {/* AI INSIGHTS */}
         {/* ===================================== */}
 
         <div
-          className="card border-0 p-5"
+          className="
+            card
+            border-0
+            p-5
+          "
           style={{
 
             borderRadius:
@@ -964,7 +947,7 @@ export default function UserHome() {
                 background:
                   "linear-gradient(to right, #22C55E, #FACC15)"
               }}
-            />
+            ></div>
 
           </div>
 
@@ -997,9 +980,7 @@ export default function UserHome() {
         {/* FOOTER */}
         {/* ===================================== */}
 
-        <div
-          className="text-center mt-5"
-        >
+        <div className="text-center mt-5">
 
           <h5
             style={{

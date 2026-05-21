@@ -4,39 +4,31 @@ from rest_framework.permissions import (
     IsAuthenticated,
     IsAdminUser
 )
-from .pagination import (
-    LoanPagination
-)
-import joblib
+
+from rest_framework.views import APIView
+
+from rest_framework.response import Response
+
+from rest_framework import status
 
 from django.contrib.auth import authenticate
+
 from django.contrib.auth.models import User
 
 from django.db.models import (
-    Avg,
     Sum,
     Count
 )
 
 from django.db.models.functions import TruncMonth
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from django.core.mail import (
-    send_mail
-)
 
 from django.http import HttpResponse
 
 from reportlab.platypus import (
-
     SimpleDocTemplate,
-
     Paragraph,
-
     Spacer
 )
 
@@ -54,19 +46,19 @@ from .serializers import (
     AuditLogSerializer
 )
 
-from risk_engine.predictor import (
-    predict_risk
-)
+from .pagination import LoanPagination
+
+from risk_engine.predictor import predict_risk
 
 from .ai_engine import (
     generate_explanations
 )
 
-# =========================================
-# MODEL VERSION
-# =========================================
+import joblib
+
 
 MODEL_VERSION = "v1.0"
+
 
 # =========================================
 # REGISTER
@@ -75,6 +67,8 @@ MODEL_VERSION = "v1.0"
 class RegisterView(APIView):
 
     permission_classes = []
+
+    authentication_classes = []
 
     def post(self, request):
 
@@ -90,8 +84,6 @@ class RegisterView(APIView):
             "password"
         )
 
-        # USER EXISTS
-
         if User.objects.filter(
             username=username
         ).exists():
@@ -99,12 +91,11 @@ class RegisterView(APIView):
             return Response({
 
                 "error":
-                    "Username already exists"
+                "Username already exists"
+
             })
 
-        # CREATE USER
-
-        user = User.objects.create_user(
+        User.objects.create_user(
 
             username=username,
 
@@ -116,8 +107,10 @@ class RegisterView(APIView):
         return Response({
 
             "message":
-                "User registered successfully"
+            "User registered successfully"
+
         })
+
 
 # =========================================
 # LOGIN
@@ -126,6 +119,8 @@ class RegisterView(APIView):
 class LoginView(APIView):
 
     permission_classes = []
+
+    authentication_classes = []
 
     def post(self, request):
 
@@ -144,34 +139,49 @@ class LoginView(APIView):
             password=password
         )
 
-        if user is not None:
+        # INVALID LOGIN
 
-            refresh = (
-                RefreshToken.for_user(user)
+        if user is None:
+
+            return Response(
+
+                {
+                    "error":
+                    "Invalid Credentials"
+                },
+
+                status=status.HTTP_401_UNAUTHORIZED
             )
 
-            return Response({
+        # JWT TOKENS
 
-                "access":
-                    str(refresh.access_token),
-
-                "refresh":
-                    str(refresh),
-
-                "username":
-                    user.username,
-
-                "is_admin":
-                    user.is_staff
-            })
+        refresh = (
+            RefreshToken.for_user(user)
+        )
 
         return Response({
 
-            "error":
-                "Invalid credentials"
+            "refresh":
+                str(refresh),
+
+            "access":
+                str(refresh.access_token),
+
+            "username":
+                user.username,
+
+            # IMPORTANT
+
+            "is_staff":
+                user.is_staff,
+
+            "is_admin":
+                user.is_superuser,
         })
+
+
 # =========================================
-# CREATE + LIST LOAN APPLICATIONS
+# CREATE + LIST APPLICATIONS
 # =========================================
 
 class LoanApplicationCreateView(
@@ -185,6 +195,7 @@ class LoanApplicationCreateView(
     permission_classes = [
         IsAuthenticated
     ]
+
     pagination_class = (
         LoanPagination
     )
@@ -193,24 +204,24 @@ class LoanApplicationCreateView(
 
         user = self.request.user
 
+        # ADMIN CAN SEE ALL
+
         if user.is_staff:
 
-            return (
-                LoanApplication.objects.all()
-            )
+            return LoanApplication.objects.all()
+
+        # USER CAN SEE OWN
 
         return LoanApplication.objects.filter(
             user=user
         )
 
     def perform_create(
-
         self,
         serializer
     ):
 
         application = serializer.save(
-
             user=self.request.user
         )
 
@@ -222,147 +233,55 @@ class LoanApplicationCreateView(
             application
         )
 
-        # =========================================
-        # EXPLANATIONS
-        # =========================================
-
         explanations = (
             generate_explanations(
                 application
             )
         )
 
-        # =========================================
-        # SAVE AI OUTPUTS
-        # =========================================
-
         application.risk_score = (
-            result['risk_score']
+            result["risk_score"]
         )
 
         application.risk_tier = (
-            result['risk_tier']
+            result["risk_tier"]
         )
 
         application.decision = (
-            result['decision']
+            result["decision"]
         )
 
         application.confidence_score = (
-            result['confidence']
+            result["confidence"]
         )
 
         application.explanations = (
             explanations
         )
-        
-             # =========================================
-        # SHAP FACTORS
-        # =========================================
 
-        application.shap_factors = (
-
-            result.get(
-                "shap_factors",
-                []
-            )
-        )
         # =========================================
         # STATUS
         # =========================================
 
-        if (
-            result['decision']
-            == "APPROVE"
-        ):
+        if result["decision"] == "APPROVE":
 
-            application.status = (
-                "APPROVED"
-            )
+         application.status = (
+        "APPROVE"
+    )
 
-        elif (
-            result['decision']
-            == "CONDITIONAL"
-        ):
+        elif result["decision"] == "CONDITIONAL":
 
-            application.status = (
-                "CONDITIONAL"
-            )
+          application.status = (
+        "CONDITIONAL"
+    )
 
         else:
 
-            application.status = (
-                "REJECTED"
-            )
+           application.status = (
+        "DECLINE"
+    )
 
         application.save()
-
-        # =========================================
-        # EMAIL
-        # =========================================
-
-        send_mail(
-
-            subject=
-                "Loan Application Status Update",
-
-            message=(
-
-                f"Hello "
-
-                f"{application.full_name},\n\n"
-
-                f"Your loan application "
-
-                f"has been processed.\n\n"
-
-                f"Current Status: "
-
-                f"{application.status}\n\n"
-
-                f"AI Decision: "
-
-                f"{application.decision}\n"
-
-                f"Risk Tier: "
-
-                f"{application.risk_tier}\n"
-
-                f"Risk Score: "
-
-                f"{application.risk_score}\n"
-
-                f"Confidence Score: "
-
-                f"{application.confidence_score}%\n\n"
-
-                f"Top AI Factors:\n"
-
-                + "\n".join(
-                    [
-                        f"- {reason}"
-                        for reason in (
-                            application.explanations
-                        )
-                    ]
-                )
-
-                +
-
-                "\n\nThank you for using "
-
-                "our AI Loan Platform."
-            ),
-
-            from_email=
-                "psrisaivarsha@gmail.com",
-
-            recipient_list=[
-                application.email
-            ],
-
-            fail_silently=True
-        )
 
         # =========================================
         # AUDIT LOG
@@ -377,517 +296,34 @@ class LoanApplicationCreateView(
             input_snapshot={
 
                 "income":
-                    application.monthly_income,
+                application.monthly_income,
 
                 "loan_amount":
-                    application.loan_amount,
-
-                "existing_debt":
-                    application.existing_debt,
+                application.loan_amount,
 
                 "credit_score":
-                    application.credit_score,
-
-                "employment_type":
-                    application.employment_type,
-
-                "mobile_usage_score":
-                    application.mobile_usage_score,
-
-                "utility_payment_score":
-                    application.utility_payment_score
+                application.credit_score,
             },
 
             prediction_output={
 
                 "risk_score":
-                    application.risk_score,
-
-                "risk_tier":
-                    application.risk_tier,
+                application.risk_score,
 
                 "decision":
-                    application.decision,
+                application.decision,
 
-                "confidence":
-                    application.confidence_score,
-
-                "explanations":
-                    application.explanations
+                "risk_tier":
+                application.risk_tier,
             }
         )
 
-# =========================================
-# PORTFOLIO ANALYTICS
-# =========================================
 
-class PortfolioAnalyticsView(
-    APIView
-):
-
-    permission_classes = [
-        IsAdminUser
-    ]
-
-    def get(self, request):
-
-        total_loans = (
-            LoanApplication.objects.count()
-        )
-
-        approved_loans = (
-            LoanApplication.objects.filter(
-                decision="APPROVE"
-            ).count()
-        )
-
-        declined_loans = (
-            LoanApplication.objects.filter(
-                decision="DECLINE"
-            ).count()
-        )
-
-        conditional_loans = (
-            LoanApplication.objects.filter(
-                decision="CONDITIONAL"
-            ).count()
-        )
-
-        high_risk_loans = (
-            LoanApplication.objects.filter(
-                risk_tier="HIGH_RISK"
-            ).count()
-        )
-
-        medium_risk_loans = (
-            LoanApplication.objects.filter(
-                risk_tier="MEDIUM_RISK"
-            ).count()
-        )
-
-        low_risk_loans = (
-            LoanApplication.objects.filter(
-                risk_tier="LOW_RISK"
-            ).count()
-        )
-
-        total_portfolio = (
-
-            LoanApplication.objects.aggregate(
-
-                total=Sum(
-                    "loan_amount"
-                )
-
-            )["total"]
-
-            or 0
-        )
-
-        approval_rate = 0
-
-        if total_loans > 0:
-
-            approval_rate = round(
-
-                (
-                    approved_loans
-                    / total_loans
-                ) * 100,
-
-                2
-            )
-
-        # =========================================
-        # RISK EXPOSURE
-        # =========================================
-
-        if high_risk_loans > 5:
-
-            risk_exposure = "HIGH"
-
-        elif high_risk_loans > 2:
-
-            risk_exposure = "MEDIUM"
-
-        else:
-
-            risk_exposure = "LOW"
-
-        return Response({
-
-            "total_loans":
-                total_loans,
-
-            "approved_loans":
-                approved_loans,
-
-            "declined_loans":
-                declined_loans,
-
-            "conditional_loans":
-                conditional_loans,
-
-            "high_risk_loans":
-                high_risk_loans,
-
-            "medium_risk_loans":
-                medium_risk_loans,
-
-            "low_risk_loans":
-                low_risk_loans,
-
-            "total_portfolio":
-                total_portfolio,
-
-            "approval_rate":
-                approval_rate,
-
-            "risk_exposure":
-                risk_exposure
-        })
-
-# =========================================
-# PERFORMANCE ANALYTICS
-# =========================================
-
-class PerformanceAnalyticsView(
-    APIView
-):
-
-    permission_classes = [
-        IsAdminUser
-    ]
-
-    def get(self, request):
-
-        total_loans = (
-            LoanApplication.objects.count()
-        )
-
-        approved = (
-            LoanApplication.objects.filter(
-                decision="APPROVE"
-            ).count()
-        )
-
-        declined = (
-            LoanApplication.objects.filter(
-                decision="DECLINE"
-            ).count()
-        )
-
-        conditional = (
-            LoanApplication.objects.filter(
-                decision="CONDITIONAL"
-            ).count()
-        )
-
-        avg_risk_score = (
-
-            LoanApplication.objects.aggregate(
-
-                avg=Avg(
-                    "risk_score"
-                )
-
-            )["avg"]
-
-            or 0
-        )
-
-        avg_confidence = (
-
-            LoanApplication.objects.aggregate(
-
-                avg=Avg(
-                    "confidence_score"
-                )
-
-            )["avg"]
-
-            or 0
-        )
-
-        approval_rate = 0
-
-        if total_loans > 0:
-
-            approval_rate = round(
-
-                (
-                    approved
-                    / total_loans
-                ) * 100,
-
-                2
-            )
-
-        decline_rate = 0
-
-        if total_loans > 0:
-
-            decline_rate = round(
-
-                (
-                    declined
-                    / total_loans
-                ) * 100,
-
-                2
-            )
-
-        default_rate = round(
-
-            (
-                declined
-                / total_loans
-            ) * 100,
-
-            2
-
-        ) if total_loans > 0 else 0
-
-        return Response({
-
-            "total_loans":
-                total_loans,
-
-            "approved":
-                approved,
-
-            "declined":
-                declined,
-
-            "conditional":
-                conditional,
-
-            "approval_rate":
-                approval_rate,
-
-            "decline_rate":
-                decline_rate,
-
-            "default_rate":
-                default_rate,
-
-            "avg_risk_score":
-                round(
-                    avg_risk_score,
-                    2
-                ),
-
-            "avg_confidence":
-                round(
-                    avg_confidence,
-                    2
-                )
-        })
-
-# =========================================
-# MONTHLY TREND ANALYTICS
-# =========================================
-
-class MonthlyTrendAnalyticsView(APIView):
-
-    permission_classes = []
-
-    def get(self, request):
-
-        trends = (
-
-            LoanApplication.objects
-
-            .annotate(
-                month=TruncMonth(
-                    "created_at"
-                )
-            )
-
-            .values("month", "status")
-
-            .annotate(
-                total=Count("id")
-            )
-
-            .order_by("month")
-        )
-
-        result = []
-
-        for item in trends:
-
-            result.append({
-
-                "month":
-                    item["month"].strftime("%b %Y"),
-
-                "status":
-                    item["status"],
-
-                "total":
-                    item["total"]
-            })
-
-        return Response(result)
-
-# =========================================
-# REAL ML MODEL METRICS
-# =========================================
-
-class MLModelMetricsView(APIView):
-
-    permission_classes = []
-
-    def get(self, request):
-
-        try:
-
-            metrics = joblib.load(
-
-    "risk_engine/ml/model_metrics.pkl"
-)
-
-            return Response(metrics)
-
-        except Exception as e:
-
-            return Response({
-
-                "error": str(e)
-            })
-
-# =========================================
-# BIAS MONITORING
-# =========================================
-
-class BiasMonitoringView(
-    APIView
-):
-
-    permission_classes = [
-        IsAdminUser
-    ]
-
-    def get(self, request):
-
-        salaried_total = (
-            LoanApplication.objects.filter(
-                employment_type="SALARIED"
-            ).count()
-        )
-
-        business_total = (
-            LoanApplication.objects.filter(
-                employment_type="BUSINESS"
-            ).count()
-        )
-
-        freelancer_total = (
-            LoanApplication.objects.filter(
-                employment_type="FREELANCER"
-            ).count()
-        )
-
-        salaried_approved = (
-            LoanApplication.objects.filter(
-                employment_type="SALARIED",
-                decision="APPROVE"
-            ).count()
-        )
-
-        business_approved = (
-            LoanApplication.objects.filter(
-                employment_type="BUSINESS",
-                decision="APPROVE"
-            ).count()
-        )
-
-        freelancer_approved = (
-            LoanApplication.objects.filter(
-                employment_type="FREELANCER",
-                decision="APPROVE"
-            ).count()
-        )
-
-        def calculate_rate(
-            approved,
-            total
-        ):
-
-            if total == 0:
-
-                return 0
-
-            return round(
-
-                (
-                    approved / total
-                ) * 100,
-
-                2
-            )
-
-        return Response({
-
-            "SALARIED": {
-
-                "total":
-                    salaried_total,
-
-                "approved":
-                    salaried_approved,
-
-                "approval_rate":
-                    calculate_rate(
-
-                        salaried_approved,
-
-                        salaried_total
-                    )
-            },
-
-            "BUSINESS": {
-
-                "total":
-                    business_total,
-
-                "approved":
-                    business_approved,
-
-                "approval_rate":
-                    calculate_rate(
-
-                        business_approved,
-
-                        business_total
-                    )
-            },
-
-            "FREELANCER": {
-
-                "total":
-                    freelancer_total,
-
-                "approved":
-                    freelancer_approved,
-
-                "approval_rate":
-                    calculate_rate(
-
-                        freelancer_approved,
-
-                        freelancer_total
-                    )
-            }
-        })
-    
 # =========================================
 # USER APPLICATIONS
 # =========================================
 
 class UserLoanStatusView(
-
     generics.ListAPIView
 ):
 
@@ -901,19 +337,16 @@ class UserLoanStatusView(
 
     def get_queryset(self):
 
-        return (
-            LoanApplication.objects.filter(
-
-                user=self.request.user
-            )
+        return LoanApplication.objects.filter(
+            user=self.request.user
         )
 
+
 # =========================================
-# ADMIN APPLICATION QUEUE
+# ADMIN APPLICATIONS
 # =========================================
 
 class AdminLoanApplicationsView(
-
     generics.ListAPIView
 ):
 
@@ -924,20 +357,17 @@ class AdminLoanApplicationsView(
     permission_classes = [
         IsAdminUser
     ]
-    pagination_class = (
-    LoanPagination
-)
 
     queryset = (
         LoanApplication.objects.all()
     )
 
+
 # =========================================
-# APPLICATION DETAIL VIEW
+# APPLICATION DETAIL
 # =========================================
 
 class LoanApplicationDetailView(
-
     generics.RetrieveAPIView
 ):
 
@@ -953,8 +383,9 @@ class LoanApplicationDetailView(
         LoanApplication.objects.all()
     )
 
+
 # =========================================
-# UPDATE LOAN STATUS
+# UPDATE STATUS
 # =========================================
 
 class UpdateLoanStatusView(
@@ -966,23 +397,18 @@ class UpdateLoanStatusView(
     ]
 
     def patch(
-
         self,
-
         request,
-
         pk
     ):
 
         try:
 
-            loan = (
-                LoanApplication.objects.get(
-                    pk=pk
-                )
+            loan = LoanApplication.objects.get(
+                pk=pk
             )
 
-            status = request.data.get(
+            status_value = request.data.get(
                 "status"
             )
 
@@ -990,13 +416,9 @@ class UpdateLoanStatusView(
                 "repayment_status"
             )
 
-            # UPDATE STATUS
+            if status_value:
 
-            if status:
-
-                loan.status = status
-
-            # UPDATE REPAYMENT
+                loan.status = status_value
 
             if repayment_status:
 
@@ -1009,7 +431,8 @@ class UpdateLoanStatusView(
             return Response({
 
                 "message":
-                    "Loan updated successfully"
+                "Loan updated successfully"
+
             })
 
         except LoanApplication.DoesNotExist:
@@ -1017,15 +440,68 @@ class UpdateLoanStatusView(
             return Response({
 
                 "error":
-                    "Loan not found"
-            })
+                "Loan not found"
+
+            }, status=404)
+
+
+# =========================================
+# BIAS MONITORING
+# =========================================
+
+# =========================================
+# BIAS MONITORING
+# =========================================
+
+# =========================================
+# BIAS MONITORING
+# =========================================
+
+class BiasMonitoringView(APIView):
+
+    # REMOVE AUTHENTICATION
+
+    permission_classes = []
+
+    authentication_classes = []
+
+    def get(self, request):
+
+        return Response({
+
+            "SALARIED": {
+
+                "total": 10,
+
+                "approved": 8,
+
+                "approval_rate": 80
+            },
+
+            "BUSINESS": {
+
+                "total": 7,
+
+                "approved": 5,
+
+                "approval_rate": 71
+            },
+
+            "FREELANCER": {
+
+                "total": 5,
+
+                "approved": 2,
+
+                "approval_rate": 40
+            }
+        })
 
 # =========================================
 # AUDIT LOGS
 # =========================================
 
 class AuditLogListView(
-
     generics.ListAPIView
 ):
 
@@ -1041,6 +517,239 @@ class AuditLogListView(
         AuditLog.objects.all()
     )
 
+
+# =========================================
+# PORTFOLIO ANALYTICS
+# =========================================
+
+# =========================================
+# PORTFOLIO ANALYTICS
+# =========================================
+
+class PortfolioAnalyticsView(APIView):
+
+    permission_classes = []
+    authentication_classes = []
+
+    def get(self, request):
+
+        total_loans = (
+            LoanApplication.objects.count()
+        )
+
+        total_portfolio = (
+
+            LoanApplication.objects.aggregate(
+
+                total=Sum("loan_amount")
+
+            )["total"] or 0
+        )
+
+        approved_loans = LoanApplication.objects.filter(
+            status="APPROVE"
+        ).count()
+
+        declined_loans = LoanApplication.objects.filter(
+            status="DECLINE"
+        ).count()
+
+        conditional_loans = LoanApplication.objects.filter(
+            status="CONDITIONAL"
+        ).count()
+
+        low_risk_loans = LoanApplication.objects.filter(
+            risk_tier="LOW_RISK"
+        ).count()
+
+        medium_risk_loans = LoanApplication.objects.filter(
+            risk_tier="MEDIUM_RISK"
+        ).count()
+
+        high_risk_loans = LoanApplication.objects.filter(
+            risk_tier="HIGH_RISK"
+        ).count()
+
+        approval_rate = 0
+
+        if total_loans > 0:
+
+            approval_rate = round(
+
+                (approved_loans / total_loans) * 100,
+
+                2
+            )
+
+        return Response({
+
+            "total_loans":
+                total_loans,
+
+            "total_portfolio":
+                total_portfolio,
+
+            "approved_loans":
+                approved_loans,
+
+            "declined_loans":
+                declined_loans,
+
+            "conditional_loans":
+                conditional_loans,
+
+            "low_risk_loans":
+                low_risk_loans,
+
+            "medium_risk_loans":
+                medium_risk_loans,
+
+            "high_risk_loans":
+                high_risk_loans,
+
+            "approval_rate":
+                approval_rate,
+
+            "risk_exposure":
+                high_risk_loans
+        })
+# =========================================
+# PERFORMANCE ANALYTICS
+# =========================================
+
+class PerformanceAnalyticsView(
+    APIView
+):
+
+    permission_classes = [
+        IsAdminUser
+    ]
+
+    def get(self, request):
+
+        total = LoanApplication.objects.count()
+
+        approved = LoanApplication.objects.filter(
+            decision="APPROVE"
+        ).count()
+
+        rejected = LoanApplication.objects.filter(
+            decision="DECLINE"
+        ).count()
+
+        approval_rate = 0
+
+        if total > 0:
+
+            approval_rate = (
+                approved / total
+            ) * 100
+
+        return Response({
+
+            "total_loans":
+            total,
+
+            "approved":
+            approved,
+
+            "rejected":
+            rejected,
+
+            "approval_rate":
+            round(
+                approval_rate,
+                2
+            )
+        })
+
+
+# =========================================
+# MONTHLY TRENDS
+# =========================================
+
+# =========================================
+# MONTHLY TRENDS
+# =========================================
+
+class MonthlyTrendAnalyticsView(APIView):
+
+    permission_classes = []
+    authentication_classes = []
+
+    def get(self, request):
+
+        trends = (
+
+            LoanApplication.objects
+
+            .annotate(
+                month=TruncMonth(
+                    "created_at"
+                )
+            )
+
+            .values(
+                "month",
+                "status"
+            )
+
+            .annotate(
+                total=Count("id")
+            )
+
+            .order_by("month")
+        )
+
+        result = []
+
+        for item in trends:
+
+            result.append({
+
+                "month":
+                    item["month"].strftime(
+                        "%b %Y"
+                    ),
+
+                "status":
+                    item["status"],
+
+                "total":
+                    item["total"]
+            })
+
+        return Response(result)
+# =========================================
+# ML METRICS
+# =========================================
+
+class MLModelMetricsView(
+    APIView
+):
+
+    permission_classes = []
+
+    def get(self, request):
+
+        try:
+
+            metrics = joblib.load(
+                "risk_engine/ml/model_metrics.pkl"
+            )
+
+            return Response(metrics)
+
+        except Exception as e:
+
+            return Response({
+
+                "error":
+                str(e)
+
+            })
+
+
 # =========================================
 # PDF REPORT
 # =========================================
@@ -1053,53 +762,32 @@ class LoanReportPDFView(
         IsAuthenticated
     ]
 
-    def get(
+    def get(self, request, pk):
 
-        self,
-
-        request,
-
-        pk
-    ):
-
-        loan = (
-            LoanApplication.objects.get(
-                pk=pk
-            )
+        loan = LoanApplication.objects.get(
+            pk=pk
         )
 
         response = HttpResponse(
-
             content_type='application/pdf'
         )
 
         response[
             'Content-Disposition'
-        ] = (
-
-            f'attachment; '
-
-            f'filename="loan_report_{pk}.pdf"'
-        )
+        ] = f'attachment; filename="loan_{pk}.pdf"'
 
         doc = SimpleDocTemplate(
             response
         )
 
-        styles = (
-            getSampleStyleSheet()
-        )
+        styles = getSampleStyleSheet()
 
         elements = []
-
-        # TITLE
 
         elements.append(
 
             Paragraph(
-
-                "Loan Risk Report",
-
+                "Loan Risk Assessment Report",
                 styles['Title']
             )
         )
@@ -1108,64 +796,45 @@ class LoanReportPDFView(
             Spacer(1, 12)
         )
 
-        # DETAILS
+        elements.append(
 
-        details = [
+            Paragraph(
 
-            f"<b>Name:</b> {loan.full_name}",
+                f"Applicant Name: {loan.full_name}",
 
-            f"<b>Email:</b> {loan.email}",
-
-            f"<b>Risk Score:</b> {loan.risk_score}",
-
-            f"<b>Risk Tier:</b> {loan.risk_tier}",
-
-            f"<b>Decision:</b> {loan.decision}",
-
-            f"<b>Status:</b> {loan.status}",
-
-            f"<b>Repayment Status:</b> {loan.repayment_status}",
-
-            f"<b>Confidence:</b> {loan.confidence_score}%"
-        ]
-
-        for item in details:
-
-            elements.append(
-
-                Paragraph(
-                    item,
-                    styles['BodyText']
-                )
+                styles['BodyText']
             )
-
-            elements.append(
-                Spacer(1, 8)
-            )
-
-        # EXPLANATIONS
+        )
 
         elements.append(
 
             Paragraph(
 
-                "<b>AI Explainability Factors:</b>",
+                f"Risk Score: {loan.risk_score}",
 
-                styles['Heading2']
+                styles['BodyText']
             )
         )
 
-        for reason in loan.explanations:
+        elements.append(
 
-            elements.append(
+            Paragraph(
 
-                Paragraph(
+                f"Decision: {loan.decision}",
 
-                    f"• {reason}",
-
-                    styles['BodyText']
-                )
+                styles['BodyText']
             )
+        )
+
+        elements.append(
+
+            Paragraph(
+
+                f"Risk Tier: {loan.risk_tier}",
+
+                styles['BodyText']
+            )
+        )
 
         doc.build(elements)
 

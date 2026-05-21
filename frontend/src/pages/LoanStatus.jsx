@@ -1,29 +1,66 @@
-import { useEffect, useState } from "react"
+import {
+  useEffect,
+  useState
+} from "react"
+
 import axios from "axios"
+
+import {
+  toast
+} from "react-toastify"
+
+import Navbar from "../components/Navbar"
 
 export default function LoanStatus() {
 
-  const [loans, setLoans] = useState([])
+  // =========================================
+  // STATE
+  // =========================================
+
+  const [loans, setLoans] =
+    useState([])
 
   const [loading, setLoading] =
     useState(true)
 
-  // Fetch Loans
+  // =========================================
+  // SESSION CHECK
+  // =========================================
 
   useEffect(() => {
+
+    const token =
+      localStorage.getItem("access") ||
+      localStorage.getItem("token")
+
+    // SESSION EXPIRED
+
+    if (!token) {
+
+      toast.error(
+        "Session Expired"
+      )
+
+      window.location.href = "/"
+
+      return
+    }
 
     fetchLoans()
 
   }, [])
+
+  // =========================================
+  // FETCH LOANS
+  // =========================================
 
   const fetchLoans = async () => {
 
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access") ||
+        localStorage.getItem("token")
 
       const response =
         await axios.get(
@@ -40,15 +77,40 @@ export default function LoanStatus() {
 
       console.log(response.data)
 
-      setLoans(response.data)
+      // SAFE DATA
+
+      setLoans(
+        response.data || []
+      )
 
     } catch (error) {
 
       console.log(error)
 
-      alert(
-        "Failed to fetch loans"
-      )
+      // TOKEN EXPIRED
+
+      if (
+        error.response?.status === 401
+      ) {
+
+        toast.error(
+          "Session Expired"
+        )
+
+        localStorage.clear()
+
+        setTimeout(() => {
+
+          window.location.href = "/"
+
+        }, 1200)
+
+      } else {
+
+        toast.error(
+          "Failed to fetch loans"
+        )
+      }
 
     } finally {
 
@@ -56,229 +118,364 @@ export default function LoanStatus() {
     }
   }
 
-  return (
+  // =========================================
+  // LOADING UI
+  // =========================================
 
-    <div className="container mt-5">
+  if (loading) {
 
-      {/* Heading */}
+    return (
 
-      <div className="mb-4">
+      <div
+        className="
+          d-flex
+          justify-content-center
+          align-items-center
+          flex-column
+        "
+        style={{
+          height: "100vh"
+        }}
+      >
 
-        <h2 className="fw-bold">
+        <div
+          className="
+            spinner-border
+            text-primary
+          "
+          style={{
+            width: "4rem",
+            height: "4rem"
+          }}
+        ></div>
 
-          My Loan Applications
+        <h4 className="mt-4">
 
-        </h2>
+          Loading Loan Applications...
 
-        <p className="text-muted">
-
-          Track your AI loan
-          approval status
-
-        </p>
+        </h4>
 
       </div>
+    )
+  }
 
-      {/* Loading */}
+  // =========================================
+  // MAIN UI
+  // =========================================
 
-      {
-        loading && (
+  return (
 
-          <div className="text-center">
+    <div
+      style={{
+        background:
+          "linear-gradient(to bottom, #F1F5FF, #EEF2FF)",
 
-            <div
-              className="
-                spinner-border
-                text-primary
-              "
-            ></div>
+        minHeight: "100vh"
+      }}
+    >
 
-          </div>
-        )
-      }
+      <Navbar />
 
-      {/* No Loans */}
+      <div className="container py-5">
 
-      {
-        !loading &&
-        loans.length === 0 && (
+        {/* ========================================= */}
+        {/* HEADING */}
+        {/* ========================================= */}
 
-          <div
-            className="
-              alert
-              alert-warning
-            "
+        <div className="mb-5">
+
+          <h1
+            className="fw-bold"
+            style={{
+              color: "#0F172A"
+            }}
           >
 
-            No loan applications found
+            My Loan Applications
 
-          </div>
-        )
-      }
+          </h1>
 
-      {/* Loan Cards */}
+          <p
+            style={{
+              color: "#64748B",
+              fontSize: "17px"
+            }}
+          >
 
-      <div className="row">
+            Track your AI-powered
+            loan approval status
+            and underwriting decisions.
+
+          </p>
+
+        </div>
+
+        {/* ========================================= */}
+        {/* EMPTY STATE */}
+        {/* ========================================= */}
 
         {
-          loans.map((loan) => (
+          !loading &&
+          loans.length === 0 && (
 
             <div
               className="
-                col-md-4
-                mb-4
+                alert
+                alert-warning
               "
-              key={loan.id}
+              style={{
+                borderRadius: "16px"
+              }}
             >
+
+              No loan applications found
+
+            </div>
+          )
+        }
+
+        {/* ========================================= */}
+        {/* LOAN CARDS */}
+        {/* ========================================= */}
+
+        <div className="row">
+
+          {
+            loans.map((loan) => (
 
               <div
                 className="
-                  card
-                  shadow-lg
-                  border-0
-                  p-4
-                  h-100
+                  col-md-6
+                  col-lg-4
+                  mb-4
                 "
-                style={{
-                  borderRadius: "18px"
-                }}
+                key={loan.id}
               >
 
-                {/* Loan Amount */}
+                <div
+                  className="
+                    card
+                    border-0
+                    p-4
+                    h-100
+                  "
+                  style={{
 
-                <h4 className="fw-bold">
+                    borderRadius: "24px",
 
-                  ₹{loan.loan_amount}
+                    boxShadow:
+                      "0 10px 30px rgba(0,0,0,0.08)",
 
-                </h4>
+                    transition: "0.3s"
+                  }}
 
-                <hr />
+                  onMouseEnter={(e) => {
 
-                {/* Details */}
+                    e.currentTarget.style.transform =
+                      "translateY(-5px)"
+                  }}
 
-                <p>
+                  onMouseLeave={(e) => {
 
-                  <strong>
-                    Income:
-                  </strong>
+                    e.currentTarget.style.transform =
+                      "translateY(0px)"
+                  }}
+                >
 
-                  ₹{loan.monthly_income}
+                  {/* ========================================= */}
+                  {/* LOAN AMOUNT */}
+                  {/* ========================================= */}
 
-                </p>
-
-                <p>
-
-                  <strong>
-                    Credit Score:
-                  </strong>
-
-                  {loan.credit_score}
-
-                </p>
-
-                <p>
-
-                  <strong>
-                    Risk Tier:
-                  </strong>
-
-                  <span
-                    className={
-                      loan.risk_tier ===
-                      "LOW_RISK"
-
-                      ? "text-success"
-
-                      : loan.risk_tier ===
-                        "MEDIUM_RISK"
-
-                      ? "text-warning"
-
-                      : "text-danger"
-                    }
+                  <h3
+                    className="fw-bold"
+                    style={{
+                      color: "#2563EB"
+                    }}
                   >
 
+                    ₹{loan.loan_amount}
+
+                  </h3>
+
+                  <hr />
+
+                  {/* ========================================= */}
+                  {/* DETAILS */}
+                  {/* ========================================= */}
+
+                  <p>
+
+                    <strong>
+                      Monthly Income:
+                    </strong>
+
                     {" "}
-                    {loan.risk_tier}
 
-                  </span>
+                    ₹{loan.monthly_income}
 
-                </p>
+                  </p>
 
-                <p>
+                  <p>
 
-                  <strong>
-                    Decision:
-                  </strong>
+                    <strong>
+                      Credit Score:
+                    </strong>
 
-                  <span
-                    className={
-                      loan.decision ===
-                      "APPROVE"
+                    {" "}
 
-                      ? "text-success"
+                    {loan.credit_score}
 
-                      : "text-danger"
-                    }
+                  </p>
+
+                  <p>
+
+                    <strong>
+                      Risk Tier:
+                    </strong>
+
+                    <span
+                      className={
+                        loan.risk_tier ===
+                        "LOW_RISK"
+
+                        ? "text-success fw-bold"
+
+                        : loan.risk_tier ===
+                          "MEDIUM_RISK"
+
+                        ? "text-warning fw-bold"
+
+                        : "text-danger fw-bold"
+                      }
+                    >
+
+                      {" "}
+
+                      {loan.risk_tier}
+
+                    </span>
+
+                  </p>
+
+                  <p>
+
+                    <strong>
+                      Decision:
+                    </strong>
+
+                    <span
+                      className={
+                        loan.decision ===
+                        "APPROVE"
+
+                        ? "text-success fw-bold"
+
+                        : loan.decision ===
+                          "CONDITIONAL"
+
+                        ? "text-warning fw-bold"
+
+                        : "text-danger fw-bold"
+                      }
+                    >
+
+                      {" "}
+
+                      {loan.decision}
+
+                    </span>
+
+                  </p>
+
+                  {/* ========================================= */}
+                  {/* STATUS */}
+                  {/* ========================================= */}
+
+                  <h5 className="mt-3">
+
+                    Status:
+
+                    <span
+                      className={
+                        loan.status ===
+                        "APPROVED"
+
+                        ? "text-success fw-bold"
+
+                        : loan.status ===
+                          "REJECTED"
+
+                        ? "text-danger fw-bold"
+
+                        : loan.status ===
+                          "CONDITIONAL"
+
+                        ? "text-warning fw-bold"
+
+                        : "text-secondary fw-bold"
+                      }
+                    >
+
+                      {" "}
+
+                      {loan.status}
+
+                    </span>
+
+                  </h5>
+
+                  {/* ========================================= */}
+                  {/* CONFIDENCE */}
+                  {/* ========================================= */}
+
+                  <p className="mt-3">
+
+                    <strong>
+                      AI Confidence:
+                    </strong>
+
+                    {" "}
+
+                    {
+                      loan.confidence_score
+                    }%
+
+                  </p>
+
+                  {/* ========================================= */}
+                  {/* VIEW DETAILS */}
+                  {/* ========================================= */}
+
+                  <button
+
+                    className="
+                      btn
+                      btn-primary
+                      mt-3
+                    "
+
+                    style={{
+                      borderRadius: "12px"
+                    }}
+
+                    onClick={() => {
+
+                      window.location.href =
+                        `/application/${loan.id}`
+                    }}
                   >
 
-                    {" "}
-                    {loan.decision}
+                    View Details
 
-                  </span>
+                  </button>
 
-                </p>
-
-                {/* STATUS */}
-
-                <h5 className="mt-3">
-
-                  Status:
-
-                  <span
-                    className={
-                      loan.status ===
-                      "APPROVED"
-
-                      ? "text-success"
-
-                      : loan.status ===
-                        "REJECTED"
-
-                      ? "text-danger"
-
-                      : "text-warning"
-                    }
-                  >
-
-                    {" "}
-                    {loan.status}
-
-                  </span>
-
-                </h5>
-
-                {/* Confidence */}
-
-                <p className="mt-3">
-
-                  <strong>
-                    AI Confidence:
-                  </strong>
-
-                  {" "}
-
-                  {
-                    loan.confidence_score
-                  }%
-
-                </p>
+                </div>
 
               </div>
+            ))
+          }
 
-            </div>
-          ))
-        }
+        </div>
 
       </div>
 

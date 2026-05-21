@@ -8,29 +8,49 @@ export default function ProtectedRoute({
 
 }) {
 
-  const token = localStorage.getItem(
-    "token"
-  )
+  // =========================================
+  // ADMIN ACCESS
+  // =========================================
 
-  const isStaff = localStorage.getItem(
-    "is_staff"
-  )
+  if (adminOnly) {
 
-  // User not logged in
+    const isAdmin =
+      localStorage.getItem(
+        "is_staff"
+      ) === "true"
+
+    if (!isAdmin) {
+
+      return <Navigate to="/" />
+    }
+
+    return children
+  }
+
+  // =========================================
+  // USER ACCESS
+  // =========================================
+
+  const token =
+    localStorage.getItem("access")
+
+  const isAdmin =
+    localStorage.getItem(
+      "is_staff"
+    ) === "true"
+
+  // ADMIN CAN ALSO ACCESS
+
+  if (isAdmin) {
+
+    return children
+  }
+
+  // USER TOKEN REQUIRED
 
   if (!token) {
 
     return <Navigate to="/" />
-  }
-
-  // Admin-only route protection
-
-  if (
-    adminOnly &&
-    isStaff !== "true"
-  ) {
-
-    return <Navigate to="/loan-form" />
   }
 
   return children

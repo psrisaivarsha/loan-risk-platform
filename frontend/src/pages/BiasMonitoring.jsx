@@ -8,6 +8,10 @@ import {
 import axios from "axios"
 
 import {
+  toast
+} from "react-toastify"
+
+import {
 
   BarChart,
   Bar,
@@ -22,9 +26,9 @@ import {
 
 export default function BiasMonitoring() {
 
-  // =========================
+  // =====================================
   // STATE
-  // =========================
+  // =====================================
 
   const [
 
@@ -34,23 +38,17 @@ export default function BiasMonitoring() {
 
   ] = useState(null)
 
-  // =========================
-  // CARD STYLE
-  // =========================
+  const [
 
-  const cardStyle = {
+    loading,
 
-    borderRadius: "20px",
+    setLoading
 
-    border: "none",
+  ] = useState(true)
 
-    boxShadow:
-      "0 4px 12px rgba(0,0,0,0.08)"
-  }
-
-  // =========================
+  // =====================================
   // FETCH DATA
-  // =========================
+  // =====================================
 
   useEffect(() => {
 
@@ -63,14 +61,17 @@ export default function BiasMonitoring() {
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access")
+
+      console.log(
+        "TOKEN:",
+        token
+      )
 
       const response =
         await axios.get(
 
-          `${import.meta.env.VITE_API_URL}/api/bias-monitoring/`,
+          "http://127.0.0.1:8000/api/bias-monitoring/",
 
           {
             headers: {
@@ -81,7 +82,10 @@ export default function BiasMonitoring() {
           }
         )
 
-      console.log(response.data)
+      console.log(
+        "BIAS DATA:",
+        response.data
+      )
 
       setBiasData(
         response.data
@@ -89,15 +93,30 @@ export default function BiasMonitoring() {
 
     } catch (error) {
 
-      console.log(error)
+      console.log(
+        "BIAS ERROR:",
+        error
+      )
+
+      console.log(
+        error.response?.data
+      )
+
+      toast.error(
+        "Failed To Load Bias Data"
+      )
+
+    } finally {
+
+      setLoading(false)
     }
   }
 
-  // =========================
+  // =====================================
   // LOADING
-  // =========================
+  // =====================================
 
-  if (!biasData) {
+  if (loading) {
 
     return (
 
@@ -114,7 +133,7 @@ export default function BiasMonitoring() {
 
         <h2>
 
-          Loading Bias Analytics...
+          Loading Bias Monitoring...
 
         </h2>
 
@@ -122,9 +141,61 @@ export default function BiasMonitoring() {
     )
   }
 
-  // =========================
+  // =====================================
+  // NO DATA
+  // =====================================
+
+  if (!biasData) {
+
+    return (
+
+      <div
+        style={{
+          background: "#F4F7FC",
+          minHeight: "100vh"
+        }}
+      >
+
+        <Navbar />
+
+        <div className="container py-5">
+
+          <button
+            className="
+              btn
+              btn-dark
+              mb-4
+            "
+            onClick={() =>
+              window.location.href =
+              "/admin-home"
+            }
+          >
+
+            ← Back to Admin Home
+
+          </button>
+
+          <div
+            className="
+              alert
+              alert-warning
+            "
+          >
+
+            No Bias Data Available
+
+          </div>
+
+        </div>
+
+      </div>
+    )
+  }
+
+  // =====================================
   // CHART DATA
-  // =========================
+  // =====================================
 
   const chartData = [
 
@@ -132,30 +203,30 @@ export default function BiasMonitoring() {
       name: "Salaried",
 
       approval_rate:
-        biasData.SALARIED
-          .approval_rate
+        biasData?.SALARIED
+          ?.approval_rate || 0
     },
 
     {
       name: "Business",
 
       approval_rate:
-        biasData.BUSINESS
-          .approval_rate
+        biasData?.BUSINESS
+          ?.approval_rate || 0
     },
 
     {
       name: "Freelancer",
 
       approval_rate:
-        biasData.FREELANCER
-          .approval_rate
+        biasData?.FREELANCER
+          ?.approval_rate || 0
     }
   ]
 
-  // =========================
+  // =====================================
   // MAIN UI
-  // =========================
+  // =====================================
 
   return (
 
@@ -170,17 +241,40 @@ export default function BiasMonitoring() {
 
       <div className="container py-5">
 
-        {/* HEADING */}
+        {/* TITLE */}
 
-        <h1 className="mb-4">
+        <div
+          className="
+            d-flex
+            justify-content-between
+            align-items-center
+            mb-5
+          "
+        >
 
-          Bias Monitoring Dashboard
+          <div>
 
-        </h1>
+            <h1
+              style={{
+                fontWeight: "800"
+              }}
+            >
 
-        {/* BACK BUTTON */}
+              Bias Monitoring Dashboard
 
-        <div className="mb-4">
+            </h1>
+
+            <p
+              style={{
+                color: "#64748B"
+              }}
+            >
+
+              AI fairness and approval analysis
+
+            </p>
+
+          </div>
 
           <button
             className="
@@ -193,7 +287,7 @@ export default function BiasMonitoring() {
             }
           >
 
-            ← Back to Admin Home
+            ← Back
 
           </button>
 
@@ -201,7 +295,7 @@ export default function BiasMonitoring() {
 
         {/* SUMMARY CARDS */}
 
-        <div className="row g-4">
+        <div className="row g-4 mb-5">
 
           {/* SALARIED */}
 
@@ -210,23 +304,27 @@ export default function BiasMonitoring() {
             <div
               className="
                 card
+                border-0
                 p-4
                 bg-primary
                 text-white
               "
-              style={cardStyle}
+              style={{
+                borderRadius: "20px"
+              }}
             >
 
               <h5>
+
                 Salaried Approval
+
               </h5>
 
               <h1>
 
                 {
-                  biasData
-                    .SALARIED
-                    .approval_rate
+                  biasData?.SALARIED
+                    ?.approval_rate || 0
                 }%
 
               </h1>
@@ -242,23 +340,27 @@ export default function BiasMonitoring() {
             <div
               className="
                 card
+                border-0
                 p-4
                 bg-success
                 text-white
               "
-              style={cardStyle}
+              style={{
+                borderRadius: "20px"
+              }}
             >
 
               <h5>
+
                 Business Approval
+
               </h5>
 
               <h1>
 
                 {
-                  biasData
-                    .BUSINESS
-                    .approval_rate
+                  biasData?.BUSINESS
+                    ?.approval_rate || 0
                 }%
 
               </h1>
@@ -274,23 +376,27 @@ export default function BiasMonitoring() {
             <div
               className="
                 card
+                border-0
                 p-4
                 bg-danger
                 text-white
               "
-              style={cardStyle}
+              style={{
+                borderRadius: "20px"
+              }}
             >
 
               <h5>
+
                 Freelancer Approval
+
               </h5>
 
               <h1>
 
                 {
-                  biasData
-                    .FREELANCER
-                    .approval_rate
+                  biasData?.FREELANCER
+                    ?.approval_rate || 0
                 }%
 
               </h1>
@@ -301,177 +407,28 @@ export default function BiasMonitoring() {
 
         </div>
 
-        {/* TABLE */}
-
-        <div
-          className="
-            card
-            p-4
-            mt-5
-          "
-          style={cardStyle}
-        >
-
-          <h3 className="mb-4">
-
-            Fairness Summary
-
-          </h3>
-
-          <table className="table">
-
-            <thead>
-
-              <tr>
-
-                <th>Employment Type</th>
-
-                <th>Total Applications</th>
-
-                <th>Approved</th>
-
-                <th>Approval Rate</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              <tr>
-
-                <td>Salaried</td>
-
-                <td>
-
-                  {
-                    biasData
-                      .SALARIED
-                      .total
-                  }
-
-                </td>
-
-                <td>
-
-                  {
-                    biasData
-                      .SALARIED
-                      .approved
-                  }
-
-                </td>
-
-                <td>
-
-                  {
-                    biasData
-                      .SALARIED
-                      .approval_rate
-                  }%
-
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>Business</td>
-
-                <td>
-
-                  {
-                    biasData
-                      .BUSINESS
-                      .total
-                  }
-
-                </td>
-
-                <td>
-
-                  {
-                    biasData
-                      .BUSINESS
-                      .approved
-                  }
-
-                </td>
-
-                <td>
-
-                  {
-                    biasData
-                      .BUSINESS
-                      .approval_rate
-                  }%
-
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td>Freelancer</td>
-
-                <td>
-
-                  {
-                    biasData
-                      .FREELANCER
-                      .total
-                  }
-
-                </td>
-
-                <td>
-
-                  {
-                    biasData
-                      .FREELANCER
-                      .approved
-                  }
-
-                </td>
-
-                <td>
-
-                  {
-                    biasData
-                      .FREELANCER
-                      .approval_rate
-                  }%
-
-                </td>
-
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
         {/* CHART */}
 
         <div
           className="
             card
+            border-0
             p-4
-            mt-5
           "
-          style={cardStyle}
+          style={{
+            borderRadius: "24px"
+          }}
         >
 
-          <h3 className="mb-4">
+          <h4 className="mb-4">
 
             Approval Rate Comparison
 
-          </h3>
+          </h4>
 
           <ResponsiveContainer
             width="100%"
-            height={350}
+            height={400}
           >
 
             <BarChart
@@ -492,7 +449,7 @@ export default function BiasMonitoring() {
 
               <Bar
                 dataKey="approval_rate"
-                fill="#0d6efd"
+                fill="#2563EB"
               />
 
             </BarChart>

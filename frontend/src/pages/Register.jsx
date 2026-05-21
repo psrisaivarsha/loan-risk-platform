@@ -1,39 +1,75 @@
 import { useState } from "react"
+
 import axios from "axios"
-import {toast} from "react-toastify"
+
+import { toast } from "react-toastify"
+
 export default function Register() {
 
+  // =========================================
+  // STATE
+  // =========================================
+
   const [formData, setFormData] = useState({
+
     username: "",
+
     email: "",
+
     password: ""
   })
 
   const [loading, setLoading] = useState(false)
 
-  // Handle Input Change
+  // =========================================
+  // HANDLE INPUT CHANGE
+  // =========================================
 
   const handleChange = (e) => {
 
     setFormData({
+
       ...formData,
-      [e.target.name]: e.target.value
+
+      [e.target.name]:
+        e.target.value
     })
   }
 
-  // Handle Register
+  // =========================================
+  // HANDLE REGISTER
+  // =========================================
 
   const handleSubmit = async (e) => {
 
     e.preventDefault()
 
-    // Password Validation
+    // =========================================
+    // VALIDATIONS
+    // =========================================
 
-    if (formData.password.length < 4) {
+    if (
+
+      formData.username.trim().length < 3
+
+    ) {
 
       toast.error(
-  "Password must be at least 4 characters"
-)
+        "Username must be at least 3 characters"
+      )
+
+      return
+    }
+
+    if (
+
+      formData.password.length < 4
+
+    ) {
+
+      toast.error(
+        "Password must be at least 4 characters"
+      )
 
       return
     }
@@ -42,87 +78,159 @@ export default function Register() {
 
     try {
 
-      console.log("Sending Data:", formData)
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/register/`,
+      console.log(
+        "Sending Data:",
         formData
       )
 
-      console.log("Backend Response:", response.data)
+      const response =
+        await axios.post(
 
-      // Success Message
+          `${import.meta.env.VITE_API_URL}/api/register/`,
 
-      if (response.data.message) {
+          formData
+        )
+
+      console.log(
+        "Backend Response:",
+        response.data
+      )
+
+      // =========================================
+      // SUCCESS MESSAGE
+      // =========================================
+
+      if (
+        response.data?.message
+      ) {
 
         toast.success(
-  response.data.message
-)
+          response.data.message
+        )
 
       } else {
 
         toast.success(
-  "Registration Successful"
-)
+          "Registration Successful"
+        )
       }
 
-      // Reset Form
+      // =========================================
+      // RESET FORM
+      // =========================================
 
       setFormData({
+
         username: "",
+
         email: "",
+
         password: ""
       })
 
-      // Delay Redirect
+      // =========================================
+      // REDIRECT
+      // =========================================
 
       setTimeout(() => {
 
         window.location.href = "/"
 
-      }, 1000)
+      }, 1500)
 
     } catch (error) {
 
-      console.log("Full Error:", error)
+      console.log(
+        "Full Error:",
+        error
+      )
 
-      // Backend Validation Error
+      // =========================================
+      // BACKEND VALIDATION ERROR
+      // =========================================
 
-      if (error.response?.data?.error) {
+      if (
 
-        toast.error(
-  error.response.data.error
-)
+        error.response?.data?.username?.[0]
 
-      }
-
-      // Other Backend Errors
-
-      else if (error.response?.data?.message) {
-
-toast.error(
-  error.response.data.message
-)
-
-      }
-
-      // Server Not Running
-
-      else if (error.code === "ERR_NETWORK") {
+      ) {
 
         toast.error(
-  "Cannot connect to backend server"
-)
 
+          error.response.data.username[0]
+        )
       }
 
-      // Generic Error
+      else if (
+
+        error.response?.data?.email?.[0]
+
+      ) {
+
+        toast.error(
+
+          error.response.data.email[0]
+        )
+      }
+
+      else if (
+
+        error.response?.data?.password?.[0]
+
+      ) {
+
+        toast.error(
+
+          error.response.data.password[0]
+        )
+      }
+
+      else if (
+
+        error.response?.data?.error
+
+      ) {
+
+        toast.error(
+          error.response.data.error
+        )
+      }
+
+      else if (
+
+        error.response?.data?.message
+
+      ) {
+
+        toast.error(
+          error.response.data.message
+        )
+      }
+
+      // =========================================
+      // NETWORK ERROR
+      // =========================================
+
+      else if (
+
+        error.code === "ERR_NETWORK"
+
+      ) {
+
+        toast.error(
+          "Cannot connect to backend server"
+        )
+      }
+
+      // =========================================
+      // GENERIC ERROR
+      // =========================================
 
       else {
 
         toast.error(
-  "Registration Failed"
-)
+          "Registration Failed"
+        )
       }
 
     } finally {
@@ -131,13 +239,24 @@ toast.error(
     }
   }
 
+  // =========================================
+  // MAIN UI
+  // =========================================
+
   return (
 
-    <div className="container-fluid vh-100">
+    <div
+      className="container-fluid"
+      style={{
+        minHeight: "100vh"
+      }}
+    >
 
-      <div className="row h-100">
+      <div className="row min-vh-100">
 
-        {/* Left Side */}
+        {/* ========================================= */}
+        {/* LEFT SIDE */}
+        {/* ========================================= */}
 
         <div
           className="
@@ -146,6 +265,7 @@ toast.error(
             justify-content-center
             align-items-center
             bg-light
+            p-4
           "
         >
 
@@ -157,13 +277,16 @@ toast.error(
               p-5
             "
             style={{
+
               width: "100%",
-              maxWidth: "450px",
-              borderRadius: "24px"
+
+              maxWidth: "460px",
+
+              borderRadius: "28px"
             }}
           >
 
-            {/* Heading */}
+            {/* HEADING */}
 
             <div className="text-center mb-4">
 
@@ -173,20 +296,25 @@ toast.error(
                   fw-bold
                 "
               >
+
                 Create Account
+
               </h1>
 
               <p className="text-muted">
-                Register to apply for loans
+
+                Register to apply for
+                AI-powered loans
+
               </p>
 
             </div>
 
-            {/* Form */}
+            {/* FORM */}
 
             <form onSubmit={handleSubmit}>
 
-              {/* Username */}
+              {/* USERNAME */}
 
               <div className="mb-4">
 
@@ -196,7 +324,9 @@ toast.error(
                     fw-semibold
                   "
                 >
+
                   Username
+
                 </label>
 
                 <input
@@ -210,11 +340,12 @@ toast.error(
                   placeholder="Enter username"
                   onChange={handleChange}
                   required
+                  autoComplete="username"
                 />
 
               </div>
 
-              {/* Email */}
+              {/* EMAIL */}
 
               <div className="mb-4">
 
@@ -224,7 +355,9 @@ toast.error(
                     fw-semibold
                   "
                 >
+
                   Email
+
                 </label>
 
                 <input
@@ -238,11 +371,12 @@ toast.error(
                   placeholder="Enter email"
                   onChange={handleChange}
                   required
+                  autoComplete="email"
                 />
 
               </div>
 
-              {/* Password */}
+              {/* PASSWORD */}
 
               <div className="mb-4">
 
@@ -252,7 +386,9 @@ toast.error(
                     fw-semibold
                   "
                 >
+
                   Password
+
                 </label>
 
                 <input
@@ -266,11 +402,12 @@ toast.error(
                   placeholder="Enter password"
                   onChange={handleChange}
                   required
+                  autoComplete="new-password"
                 />
 
               </div>
 
-              {/* Button */}
+              {/* BUTTON */}
 
               <button
                 type="submit"
@@ -281,11 +418,16 @@ toast.error(
                   w-100
                 "
                 disabled={loading}
+                style={{
+                  borderRadius: "14px"
+                }}
               >
 
                 {
                   loading
+
                     ? "Registering..."
+
                     : "Register"
                 }
 
@@ -293,24 +435,28 @@ toast.error(
 
             </form>
 
-            {/* Login Link */}
+            {/* LOGIN LINK */}
 
             <div className="text-center mt-4">
 
               <small>
 
-                Already have account?
+                Already have an account?
 
                 <button
+                  type="button"
                   className="
-                    btn btn-link
+                    btn
+                    btn-link
                     text-decoration-none
                   "
                   onClick={() =>
                     window.location.href = "/"
                   }
                 >
+
                   Login
+
                 </button>
 
               </small>
@@ -321,7 +467,9 @@ toast.error(
 
         </div>
 
-        {/* Right Side */}
+        {/* ========================================= */}
+        {/* RIGHT SIDE */}
+        {/* ========================================= */}
 
         <div
           className="
@@ -341,23 +489,31 @@ toast.error(
 
             backgroundPosition: "center",
 
-            minHeight: "100vh",
-
             position: "relative"
           }}
         >
 
+          {/* OVERLAY */}
+
           <div
             style={{
+
               position: "absolute",
+
               top: 0,
+
               left: 0,
+
               width: "100%",
+
               height: "100%",
+
               background:
-                "rgba(0,0,0,0.45)"
+                "rgba(0,0,0,0.50)"
             }}
           ></div>
+
+          {/* CONTENT */}
 
           <div
             className="position-relative"
@@ -369,17 +525,20 @@ toast.error(
             <h1
               className="
                 fw-bold
-                display-5
+                display-4
               "
             >
+
               AI-Powered Lending Platform
+
             </h1>
 
             <p className="mt-3 fs-5">
 
               Fast, transparent,
-              and explainable
-              loan approvals.
+              secure, and explainable
+              loan approvals powered
+              by Artificial Intelligence.
 
             </p>
 

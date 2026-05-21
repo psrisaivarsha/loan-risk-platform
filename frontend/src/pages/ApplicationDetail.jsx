@@ -1,28 +1,50 @@
 import { useEffect, useState } from "react"
 
 import axios from "axios"
-import.meta.env.VITE_API_URL
 
 import { useParams } from "react-router-dom"
 
 import { toast } from "react-toastify"
 
+import {
+  BrainCircuit,
+  ShieldCheck,
+  TrendingUp,
+  FileText,
+  Download,
+  ArrowLeft,
+  BadgeCheck,
+  AlertTriangle
+} from "lucide-react"
+
 import Navbar from "../components/Navbar"
 
 export default function ApplicationDetail() {
 
+  // =========================================
+  // PARAMS
+  // =========================================
+
   const { id } = useParams()
 
-  const [application, setApplication] =
-    useState(null)
+  // =========================================
+  // STATES
+  // =========================================
+
+  const [
+    application,
+    setApplication
+  ] = useState(null)
 
   const [
     repaymentStatus,
     setRepaymentStatus
   ] = useState("")
 
-  const [loading, setLoading] =
-    useState(true)
+  const [
+    loading,
+    setLoading
+  ] = useState(true)
 
   // =========================================
   // FETCH APPLICATION
@@ -32,16 +54,15 @@ export default function ApplicationDetail() {
 
     fetchApplication()
 
-  }, [])
+  }, [id])
 
   const fetchApplication = async () => {
 
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access") ||
+        localStorage.getItem("token")
 
       const response =
         await axios.get(
@@ -50,6 +71,7 @@ export default function ApplicationDetail() {
 
           {
             headers: {
+
               Authorization:
                 `Bearer ${token}`
             }
@@ -61,8 +83,7 @@ export default function ApplicationDetail() {
       )
 
       setRepaymentStatus(
-        response.data
-          .repayment_status
+        response.data.repayment_status
       )
 
     } catch (error) {
@@ -80,7 +101,7 @@ export default function ApplicationDetail() {
   }
 
   // =========================================
-  // UPDATE LOAN STATUS
+  // UPDATE STATUS
   // =========================================
 
   const updateStatus = async (
@@ -90,21 +111,20 @@ export default function ApplicationDetail() {
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access") ||
+        localStorage.getItem("token")
 
       await axios.patch(
 
         `${import.meta.env.VITE_API_URL}/api/update-loan-status/${id}/`,
 
         {
-          status:
-            statusValue
+          status: statusValue
         },
 
         {
           headers: {
+
             Authorization:
               `Bearer ${token}`
           }
@@ -142,9 +162,8 @@ export default function ApplicationDetail() {
       try {
 
         const token =
-          localStorage.getItem(
-            "access"
-          )
+          localStorage.getItem("access") ||
+          localStorage.getItem("token")
 
         await axios.patch(
 
@@ -181,6 +200,76 @@ export default function ApplicationDetail() {
     }
 
   // =========================================
+  // DOWNLOAD PDF
+  // =========================================
+
+  const downloadPDF = async () => {
+
+    try {
+
+      const token =
+        localStorage.getItem("access") ||
+        localStorage.getItem("token")
+
+      const response =
+        await axios.get(
+
+          `${import.meta.env.VITE_API_URL}/api/applications/${application.id}/pdf/`,
+
+          {
+
+            responseType: "blob",
+
+            headers: {
+
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        )
+
+      const fileURL =
+        window.URL.createObjectURL(
+
+          new Blob([response.data], {
+
+            type: "application/pdf"
+          })
+        )
+
+      const link =
+        document.createElement("a")
+
+      link.href = fileURL
+
+      link.setAttribute(
+
+        "download",
+
+        `loan_report_${application.id}.pdf`
+      )
+
+      document.body.appendChild(link)
+
+      link.click()
+
+      link.remove()
+
+      toast.success(
+        "PDF Download Started"
+      )
+
+    } catch (error) {
+
+      console.log(error)
+
+      toast.error(
+        "PDF download failed"
+      )
+    }
+  }
+
+  // =========================================
   // LOADING
   // =========================================
 
@@ -213,7 +302,7 @@ export default function ApplicationDetail() {
   }
 
   // =========================================
-  // NO DATA
+  // NOT FOUND
   // =========================================
 
   if (!application) {
@@ -255,433 +344,595 @@ export default function ApplicationDetail() {
 
       <Navbar />
 
-      <div
-        className="
-          container
-          py-5
-        "
-      >
+      <div className="container py-5">
+
+        {/* HEADER */}
 
         <div
           className="
-            card
-            border-0
+            d-flex
+            justify-content-between
+            align-items-center
+            flex-wrap
+            mb-4
           "
-
-          style={{
-
-            borderRadius: "28px",
-
-            boxShadow:
-              "0 20px 50px rgba(0,0,0,0.08)",
-
-            transition: "0.3s"
-          }}
-
-          onMouseEnter={(e) => {
-
-            e.currentTarget.style.transform =
-              "translateY(-4px)"
-          }}
-
-          onMouseLeave={(e) => {
-
-            e.currentTarget.style.transform =
-              "translateY(0px)"
-          }}
         >
 
-          <div className="card-body p-5">
+          <div>
 
-            {/* ========================================= */}
-            {/* HEADING */}
-            {/* ========================================= */}
-
-            <h2
-              className="mb-4"
-
+            <h1
               style={{
-
                 fontWeight: "800",
-
                 color: "#0F172A"
               }}
             >
 
               AI Loan Application Report
 
-            </h2>
+            </h1>
 
-            {/* ========================================= */}
-            {/* BUTTONS */}
-            {/* ========================================= */}
-
-            <div
-              className="
-                d-flex
-                gap-3
-                mb-4
-                flex-wrap
-              "
-            >
-
-              {/* BACK BUTTON */}
-
-              <button
-
-                className="
-                  btn
-                  btn-dark
-                "
-
-                style={{
-
-                  borderRadius: "14px",
-
-                  padding:
-                    "12px 20px"
-                }}
-
-                onClick={() => {
-
-                  if (
-
-                    localStorage.getItem(
-                      "is_admin"
-                    ) === "true"
-                  ) {
-
-                    window.location.href =
-                      "/dashboard"
-                  }
-
-                  else {
-
-                    window.location.href =
-                      "/user-home"
-                  }
-                }}
-              >
-
-                ← Back
-
-              </button>
-
-              {/* DOWNLOAD BUTTON */}
-
-              <button
-
-                className="
-                  btn
-                  btn-danger
-                "
-
-                style={{
-
-                  borderRadius: "14px",
-
-                  padding:
-                    "12px 20px"
-                }}
-
-                onClick={async () => {
-
-                  try {
-
-                    const token =
-                      localStorage.getItem(
-                        "access"
-                      )
-
-                    const response =
-                      await axios.get(
-
-                            `${import.meta.env.VITE_API_URL}/api/applications/${application.id}/pdf/`,
-
-                        {
-
-                          responseType: "blob",
-
-                          headers: {
-
-                            Authorization:
-                              `Bearer ${token}`
-                          }
-                        }
-                      )
-
-                    const fileURL =
-                      window.URL.createObjectURL(
-
-                        new Blob([response.data], {
-
-                          type: "application/pdf"
-                        })
-                      )
-
-                    const link =
-                      document.createElement("a")
-
-                    link.href = fileURL
-
-                    link.setAttribute(
-
-                      "download",
-
-                      `loan_report_${application.id}.pdf`
-                    )
-
-                    document.body.appendChild(link)
-
-                    link.click()
-
-                    link.remove()
-
-                    toast.success(
-                      "PDF Download Started"
-                    )
-
-                  } catch (error) {
-
-                    console.log(error)
-
-                    toast.error(
-                      "PDF download failed"
-                    )
-                  }
-                }}
-              >
-
-                Download PDF Report
-
-              </button>
-
-            </div>
-
-            {/* ========================================= */}
-            {/* APPLICANT DETAILS */}
-            {/* ========================================= */}
-
-            <h4
-              className="mb-3"
-
+            <p
               style={{
-
-                fontWeight: "700",
-
-                color: "#0F172A"
+                color: "#64748B"
               }}
             >
 
-              Applicant Details
+              Detailed AI-powered underwriting analysis
 
-            </h4>
+            </p>
 
-            <div className="row">
+          </div>
 
-              <div className="col-md-6">
+          <div
+            className="
+              d-flex
+              gap-3
+              flex-wrap
+            "
+          >
 
-                <p>
-                  <strong>Name:</strong>
-                  {" "}
-                  {application.full_name}
-                </p>
+            {/* BACK */}
 
-                <p>
-                  <strong>Age:</strong>
-                  {" "}
-                  {application.age}
-                </p>
+            <button
 
-                <p>
-                  <strong>Income:</strong>
-                  {" "}
-                  ₹
-                  {
-                    application.monthly_income
-                  }
-                </p>
+              className="
+                btn
+                btn-dark
+              "
 
-                <p>
-                  <strong>Employment:</strong>
-                  {" "}
-                  {
-                    application.employment_type
-                  }
-                </p>
+              style={{
+                borderRadius: "14px"
+              }}
 
-              </div>
+              onClick={() => {
 
-              <div className="col-md-6">
+                if (
 
-                <p>
-                  <strong>Loan Amount:</strong>
-                  {" "}
-                  ₹
-                  {
-                    application.loan_amount
-                  }
-                </p>
+                  localStorage.getItem(
+                    "is_staff"
+                  ) === "true"
 
-                <p>
-                  <strong>Existing Debt:</strong>
-                  {" "}
-                  ₹
-                  {
-                    application.existing_debt
-                  }
-                </p>
+                ) {
 
-                <p>
-                  <strong>Credit Score:</strong>
-                  {" "}
-                  {
-                    application.credit_score
-                  }
-                </p>
+                  window.location.href =
+                    "/dashboard"
 
-              </div>
+                } else {
+
+                  window.location.href =
+                    "/my-applications"
+                }
+              }}
+            >
+
+              <ArrowLeft size={18} />
+
+              {" "}Back
+
+            </button>
+
+            {/* PDF */}
+
+            <button
+
+              className="
+                btn
+                btn-danger
+              "
+
+              style={{
+                borderRadius: "14px"
+              }}
+
+              onClick={downloadPDF}
+            >
+
+              <Download size={18} />
+
+              {" "}Download PDF
+
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* SUMMARY CARDS */}
+
+        <div className="row g-4 mb-5">
+
+          {/* SCORE */}
+
+          <div className="col-md-3">
+
+            <div
+              className="
+                card
+                border-0
+                h-100
+              "
+              style={{
+
+                borderRadius: "24px",
+
+                padding: "25px",
+
+                boxShadow:
+                  "0 10px 30px rgba(0,0,0,0.08)"
+              }}
+            >
+
+              <TrendingUp
+                size={40}
+                color="#2563EB"
+              />
+
+              <h6 className="mt-3">
+
+                Risk Score
+
+              </h6>
+
+              <h2
+                style={{
+                  fontWeight: "800"
+                }}
+              >
+
+                {application.risk_score}
+
+              </h2>
 
             </div>
 
-            <hr />
+          </div>
 
-            {/* ========================================= */}
-            {/* UNDERWRITER ACTIONS */}
-            {/* ========================================= */}
+          {/* TIER */}
 
-            {
-              localStorage.getItem(
-                "is_admin"
-              ) === "true"
+          <div className="col-md-3">
 
-              && (
+            <div
+              className="
+                card
+                border-0
+                h-100
+              "
+              style={{
 
-                <div className="mb-4">
+                borderRadius: "24px",
 
-                  <h4
-                    className="mb-3"
+                padding: "25px",
 
-                    style={{
+                boxShadow:
+                  "0 10px 30px rgba(0,0,0,0.08)"
+              }}
+            >
 
-                      fontWeight: "700",
+              <ShieldCheck
+                size={40}
+                color="#16A34A"
+              />
 
-                      color: "#0F172A"
-                    }}
-                  >
+              <h6 className="mt-3">
 
-                    Underwriter Actions
+                Risk Tier
 
-                  </h4>
+              </h6>
 
-                  <div
-                    className="
-                      d-flex
-                      flex-wrap
-                      gap-3
-                    "
-                  >
+              <h2
+                style={{
+                  fontWeight: "800"
+                }}
+              >
 
-                    <button
-                      className="
-                        btn
-                        btn-success
-                      "
-                      style={{
-                        borderRadius: "12px"
-                      }}
-                      onClick={() =>
-                        updateStatus(
-                          "APPROVED"
-                        )
-                      }
-                    >
+                {application.risk_tier}
 
-                      Approve
+              </h2>
 
-                    </button>
+            </div>
 
-                    <button
-                      className="
-                        btn
-                        btn-danger
-                      "
-                      style={{
-                        borderRadius: "12px"
-                      }}
-                      onClick={() =>
-                        updateStatus(
-                          "REJECTED"
-                        )
-                      }
-                    >
+          </div>
 
-                      Reject
+          {/* DECISION */}
 
-                    </button>
+          <div className="col-md-3">
 
-                    <button
-                      className="
-                        btn
-                        btn-warning
-                      "
-                      style={{
-                        borderRadius: "12px"
-                      }}
-                      onClick={() =>
-                        updateStatus(
-                          "CONDITIONAL"
-                        )
-                      }
-                    >
+            <div
+              className="
+                card
+                border-0
+                h-100
+              "
+              style={{
 
-                      Conditional
+                borderRadius: "24px",
 
-                    </button>
+                padding: "25px",
 
-                    <button
-                      className="
-                        btn
-                        btn-secondary
-                      "
-                      style={{
-                        borderRadius: "12px"
-                      }}
-                      onClick={() =>
-                        updateStatus(
-                          "ON_HOLD"
-                        )
-                      }
-                    >
+                boxShadow:
+                  "0 10px 30px rgba(0,0,0,0.08)"
+              }}
+            >
 
-                      On Hold
+              <BadgeCheck
+                size={40}
+                color="#9333EA"
+              />
 
-                    </button>
+              <h6 className="mt-3">
 
-                  </div>
+                Decision
+
+              </h6>
+
+              <h2
+                style={{
+                  fontWeight: "800"
+                }}
+              >
+
+                {application.decision}
+
+              </h2>
+
+            </div>
+
+          </div>
+
+          {/* STATUS */}
+
+          <div className="col-md-3">
+
+            <div
+              className="
+                card
+                border-0
+                h-100
+              "
+              style={{
+
+                borderRadius: "24px",
+
+                padding: "25px",
+
+                boxShadow:
+                  "0 10px 30px rgba(0,0,0,0.08)"
+              }}
+            >
+
+              <AlertTriangle
+                size={40}
+                color="#F59E0B"
+              />
+
+              <h6 className="mt-3">
+
+                Status
+
+              </h6>
+
+              <h2
+                style={{
+                  fontWeight: "800"
+                }}
+              >
+
+                {application.status}
+
+              </h2>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* MAIN DETAILS */}
+
+        <div
+          className="
+            card
+            border-0
+          "
+          style={{
+
+            borderRadius: "28px",
+
+            padding: "40px",
+
+            boxShadow:
+              "0 20px 50px rgba(0,0,0,0.08)"
+          }}
+        >
+
+          {/* APPLICANT DETAILS */}
+
+          <h3
+            className="mb-4"
+            style={{
+              fontWeight: "800"
+            }}
+          >
+
+            Applicant Details
+
+          </h3>
+
+          <div className="row">
+
+            <div className="col-md-6">
+
+              <p>
+                <strong>Name:</strong>
+                {" "}
+                {application.full_name}
+              </p>
+
+              <p>
+                <strong>Email:</strong>
+                {" "}
+                {application.email}
+              </p>
+
+              <p>
+                <strong>Age:</strong>
+                {" "}
+                {application.age}
+              </p>
+
+              <p>
+                <strong>Employment:</strong>
+                {" "}
+                {application.employment_type}
+              </p>
+
+              <p>
+                <strong>Monthly Income:</strong>
+                {" "}
+                ₹{application.monthly_income}
+              </p>
+
+            </div>
+
+            <div className="col-md-6">
+
+              <p>
+                <strong>Loan Amount:</strong>
+                {" "}
+                ₹{application.loan_amount}
+              </p>
+
+              <p>
+                <strong>Existing Debt:</strong>
+                {" "}
+                ₹{application.existing_debt}
+              </p>
+
+              <p>
+                <strong>Credit Score:</strong>
+                {" "}
+                {application.credit_score}
+              </p>
+
+              <p>
+                <strong>Utility Score:</strong>
+                {" "}
+                {application.utility_payment_score}
+              </p>
+
+              <p>
+                <strong>Mobile Usage Score:</strong>
+                {" "}
+                {application.mobile_usage_score}
+              </p>
+
+            </div>
+
+          </div>
+
+          <hr className="my-5" />
+
+          {/* EXPLAINABILITY */}
+
+          <h3
+            className="mb-4"
+            style={{
+              fontWeight: "800"
+            }}
+          >
+
+            AI Explainability Factors
+
+          </h3>
+
+          {
+            application.explanations?.map(
+
+              (reason, index) => (
+
+                <div
+                  key={index}
+                  className="
+                    alert
+                    alert-primary
+                  "
+                >
+
+                  {reason}
 
                 </div>
               )
-            }
+            )
+          }
 
-            {/* ========================================= */}
-            {/* REPAYMENT STATUS */}
-            {/* ========================================= */}
+          {/* SHAP */}
 
-            {
-              localStorage.getItem(
-                "is_admin"
-              ) === "true"
+          {
+            application.shap_factors?.length > 0 && (
 
-              && (
+              <>
+
+                <hr className="my-5" />
+
+                <h3
+                  className="mb-4"
+                  style={{
+                    fontWeight: "800"
+                  }}
+                >
+
+                  SHAP AI Factors
+
+                </h3>
+
+                {
+                  application.shap_factors.map(
+
+                    (item, index) => (
+
+                      <div
+                        key={index}
+                        className="
+                          alert
+                          alert-warning
+                        "
+                      >
+
+                        {item}
+
+                      </div>
+                    )
+                  )
+                }
+
+              </>
+            )
+          }
+
+          {/* ADMIN ACTIONS */}
+
+          {
+            localStorage.getItem(
+              "is_staff"
+            ) === "true"
+
+            && (
+
+              <>
+
+                <hr className="my-5" />
+
+                <h3
+                  className="mb-4"
+                  style={{
+                    fontWeight: "800"
+                  }}
+                >
+
+                  Underwriter Actions
+
+                </h3>
+
+                <div
+                  className="
+                    d-flex
+                    gap-3
+                    flex-wrap
+                    mb-4
+                  "
+                >
+
+                  <button
+                    className="
+                      btn
+                      btn-success
+                    "
+                    onClick={() =>
+                      updateStatus(
+                        "APPROVED"
+                      )
+                    }
+                  >
+
+                    Approve
+
+                  </button>
+
+                  <button
+                    className="
+                      btn
+                      btn-danger
+                    "
+                    onClick={() =>
+                      updateStatus(
+                        "REJECTED"
+                      )
+                    }
+                  >
+
+                    Reject
+
+                  </button>
+
+                  <button
+                    className="
+                      btn
+                      btn-warning
+                    "
+                    onClick={() =>
+                      updateStatus(
+                        "CONDITIONAL"
+                      )
+                    }
+                  >
+
+                    Conditional
+
+                  </button>
+
+                  <button
+                    className="
+                      btn
+                      btn-secondary
+                    "
+                    onClick={() =>
+                      updateStatus(
+                        "ON_HOLD"
+                      )
+                    }
+                  >
+
+                    On Hold
+
+                  </button>
+
+                </div>
+
+                {/* REPAYMENT */}
 
                 <div className="mt-4">
 
-                  <h5
-                    style={{
-                      fontWeight: "700"
-                    }}
-                  >
+                  <h5 className="mb-3">
 
                     Repayment Status
 
@@ -691,26 +942,17 @@ export default function ApplicationDetail() {
                     className="
                       d-flex
                       gap-3
-                      mt-3
+                      flex-wrap
                     "
                   >
 
                     <select
-
-                      className="
-                        form-select
-                      "
-
+                      className="form-select"
                       style={{
-                        borderRadius: "12px"
+                        maxWidth: "250px"
                       }}
-
-                      value={
-                        repaymentStatus
-                      }
-
+                      value={repaymentStatus}
                       onChange={(e) =>
-
                         setRepaymentStatus(
                           e.target.value
                         )
@@ -718,311 +960,40 @@ export default function ApplicationDetail() {
                     >
 
                       <option value="ACTIVE">
-
                         ACTIVE
-
                       </option>
 
                       <option value="REPAID">
-
                         REPAID
-
                       </option>
 
                       <option value="DEFAULTED">
-
                         DEFAULTED
-
                       </option>
 
                     </select>
 
                     <button
-
                       className="
                         btn
-                        btn-dark
+                        btn-primary
                       "
-
-                      style={{
-                        borderRadius: "12px"
-                      }}
-
                       onClick={
                         updateRepaymentStatus
                       }
                     >
 
-                      Update
+                      Update Repayment
 
                     </button>
 
                   </div>
 
                 </div>
-              )
-            }
 
-            <hr />
-
-            {/* ========================================= */}
-            {/* AI DECISION */}
-            {/* ========================================= */}
-
-            <h4
-              className="mb-3"
-
-              style={{
-
-                fontWeight: "700",
-
-                color: "#0F172A"
-              }}
-            >
-
-              AI Risk Decision
-
-            </h4>
-
-            <p>
-
-              <strong>Risk Score:</strong>
-
-              {" "}
-
-              {
-                application.risk_score
-              }
-
-            </p>
-
-            <p>
-
-              <strong>Risk Tier:</strong>
-
-              {" "}
-
-              <span
-                className={
-                  application.risk_tier ===
-                  "LOW_RISK"
-
-                    ? "badge bg-success"
-
-                    : application.risk_tier ===
-                      "MEDIUM_RISK"
-
-                    ? "badge bg-warning text-dark"
-
-                    : "badge bg-danger"
-                }
-              >
-
-                {
-                  application.risk_tier
-                }
-
-              </span>
-
-            </p>
-
-            <p>
-
-              <strong>Decision:</strong>
-
-              {" "}
-
-              <span
-                className={
-                  application.decision ===
-                  "APPROVE"
-
-                    ? "badge bg-success"
-
-                    : application.decision ===
-                      "CONDITIONAL"
-
-                    ? "badge bg-warning text-dark"
-
-                    : "badge bg-danger"
-                }
-              >
-
-                {
-                  application.decision
-                }
-
-              </span>
-
-            </p>
-
-            <p>
-
-              <strong>Status:</strong>
-
-              {" "}
-
-              <span
-                className={
-                  application.status ===
-                  "APPROVED"
-
-                    ? "badge bg-success"
-
-                    : application.status ===
-                      "REJECTED"
-
-                    ? "badge bg-danger"
-
-                    : application.status ===
-                      "CONDITIONAL"
-
-                    ? "badge bg-warning text-dark"
-
-                    : "badge bg-secondary"
-                }
-              >
-
-                {
-                  application.status
-                }
-
-              </span>
-
-            </p>
-
-            <p>
-
-              <strong>Confidence:</strong>
-
-              {" "}
-
-              {
-                application.confidence_score
-              }%
-
-            </p>
-
-            <hr />
-
-            {/* ========================================= */}
-            {/* AI EXPLANATIONS */}
-            {/* ========================================= */}
-
-            <h4
-              className="mb-3"
-
-              style={{
-
-                fontWeight: "700",
-
-                color: "#0F172A"
-              }}
-            >
-
-              AI Decision Factors
-
-            </h4>
-
-            {
-              application?.explanations
-                ?.length > 0
-
-                ? (
-
-                  <ul
-                    className="list-group"
-
-                    style={{
-
-                      borderRadius: "18px",
-
-                      overflow: "hidden"
-                    }}
-                  >
-
-                    {
-                      application
-                        .explanations
-                        .map(
-
-                          (
-                            reason,
-                            index
-                          ) => (
-
-                            <li
-                              key={index}
-                              className="
-                                list-group-item
-                              "
-                            >
-
-                              {reason}
-
-                            </li>
-                          )
-                        )
-                    }
-
-                  </ul>
-
-                ) : (
-
-                  <div
-                    className="
-                      alert
-                      alert-warning
-                    "
-                  >
-
-                    No AI explanations available
-
-                  </div>
-                )
-            }
-
-            {/* ========================================= */}
-            {/* DECLINE MESSAGE */}
-            {/* ========================================= */}
-
-            {
-              application.decision ===
-              "DECLINE"
-
-              && (
-
-                <div
-                  className="
-                    alert
-                    alert-danger
-                    mt-4
-                  "
-                >
-
-                  <h5>
-
-                    Why was this application declined?
-
-                  </h5>
-
-                  <p className="mb-0">
-
-                    The application was declined
-                    because the AI system identified
-                    high lending risk based on
-                    income stability,
-                    existing debt,
-                    credit score,
-                    and repayment capability.
-
-                  </p>
-
-                </div>
-              )
-            }
-
-          </div>
+              </>
+            )
+          }
 
         </div>
 

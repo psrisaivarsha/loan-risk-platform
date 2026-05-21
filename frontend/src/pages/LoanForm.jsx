@@ -1,4 +1,7 @@
-import { useState } from "react"
+import {
+  useState,
+  useEffect
+} from "react"
 
 import axios from "axios"
 
@@ -7,14 +10,6 @@ import {
 } from "react-toastify"
 
 import {
-  User,
-  Mail,
-  Wallet,
-  BadgeDollarSign,
-  CreditCard,
-  Briefcase,
-  Smartphone,
-  BarChart3,
   ArrowLeft,
   BrainCircuit
 } from "lucide-react"
@@ -51,28 +46,51 @@ export default function LoanForm() {
   })
 
   // =========================================
-  // RESPONSE STATE
+  // RESPONSE DATA
   // =========================================
 
   const [
-
     responseData,
-
     setResponseData
-
   ] = useState(null)
 
   // =========================================
-  // LOADING STATE
+  // LOADING
   // =========================================
 
   const [
-
     loading,
-
     setLoading
-
   ] = useState(false)
+
+  // =========================================
+  // CONSENT
+  // =========================================
+
+  const [
+    consent,
+    setConsent
+  ] = useState(false)
+
+  // =========================================
+  // SESSION CHECK
+  // =========================================
+
+  useEffect(() => {
+
+    const token =
+      localStorage.getItem("access")
+
+    if (!token) {
+
+      toast.error(
+        "Session Expired"
+      )
+
+      window.location.href = "/"
+    }
+
+  }, [])
 
   // =========================================
   // HANDLE CHANGE
@@ -99,19 +117,124 @@ export default function LoanForm() {
 
     setLoading(true)
 
+    // =========================================
+    // VALIDATION
+    // =========================================
+
+    if (
+      Number(formData.age) < 18
+    ) {
+
+      toast.error(
+        "Applicant must be 18+"
+      )
+
+      setLoading(false)
+
+      return
+    }
+
+    if (
+
+      !formData.credit_score ||
+
+      Number(formData.credit_score) < 300 ||
+
+      Number(formData.credit_score) > 900
+
+    ) {
+
+      toast.error(
+        "Credit score must be between 300 and 900"
+      )
+
+      setLoading(false)
+
+      return
+    }
+
+    if (!consent) {
+
+      toast.error(
+        "Please accept consent policy"
+      )
+
+      setLoading(false)
+
+      return
+    }
+
+    if (
+      Number(formData.monthly_income) <= 0
+    ) {
+
+      toast.error(
+        "Monthly income required"
+      )
+
+      setLoading(false)
+
+      return
+    }
+
+    if (
+      Number(formData.loan_amount) <= 0
+    ) {
+
+      toast.error(
+        "Invalid loan amount"
+      )
+
+      setLoading(false)
+
+      return
+    }
+
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access")
+
+      // =========================================
+      // CLEAN PAYLOAD
+      // =========================================
+
+      const payload = {
+
+        ...formData,
+
+        age:
+          Number(formData.age),
+
+        monthly_income:
+          Number(formData.monthly_income),
+
+        loan_amount:
+          Number(formData.loan_amount),
+
+        existing_debt:
+          Number(formData.existing_debt),
+
+        credit_score:
+          Number(formData.credit_score),
+
+        utility_payment_score:
+          Number(formData.utility_payment_score),
+
+        mobile_usage_score:
+          Number(formData.mobile_usage_score)
+      }
+
+      // =========================================
+      // API CALL
+      // =========================================
 
       const response =
         await axios.post(
 
           `${import.meta.env.VITE_API_URL}/api/loan-applications/`,
 
-          formData,
+          payload,
 
           {
             headers: {
@@ -122,19 +245,60 @@ export default function LoanForm() {
           }
         )
 
+      console.log(response.data)
+
+      // =========================================
+      // SAVE RESPONSE
+      // =========================================
+
       setResponseData(
         response.data
       )
 
+      // =========================================
+      // SUCCESS
+      // =========================================
+
       toast.success(
-
         "Loan Application Submitted Successfully!"
-
       )
+
+      // =========================================
+      // RESET FORM
+      // =========================================
+
+      setFormData({
+
+        full_name: "",
+
+        email: "",
+
+        age: "",
+
+        monthly_income: "",
+
+        employment_type: "SALARIED",
+
+        loan_amount: "",
+
+        existing_debt: "",
+
+        credit_score: "",
+
+        utility_payment_score: "",
+
+        mobile_usage_score: ""
+      })
+
+      setConsent(false)
 
     } catch (error) {
 
       console.log(error)
+
+      // =========================================
+      // TOKEN EXPIRED
+      // =========================================
 
       if (
 
@@ -144,9 +308,7 @@ export default function LoanForm() {
       ) {
 
         toast.error(
-
-          "Session Expired. Please Login Again."
-
+          "Session Expired. Login Again."
         )
 
         localStorage.clear()
@@ -155,16 +317,64 @@ export default function LoanForm() {
 
           window.location.href = "/"
 
-        }, 2000)
+        }, 1500)
 
         return
       }
 
-      toast.error(
+      // =========================================
+      // UNAUTHORIZED
+      // =========================================
 
-        "Application Submission Failed"
+      if (
+        error.response?.status === 401
+      ) {
 
-      )
+        toast.error(
+          "Unauthorized Access"
+        )
+      }
+
+      // =========================================
+      // VALIDATION ERROR
+      // =========================================
+
+      else if (
+        error.response?.data
+      ) {
+
+        console.log(
+          error.response.data
+        )
+
+        toast.error(
+          "Validation Failed"
+        )
+      }
+
+      // =========================================
+      // NETWORK ERROR
+      // =========================================
+
+      else if (
+        error.code === "ERR_NETWORK"
+      ) {
+
+        toast.error(
+          "Backend Server Not Running"
+        )
+      }
+
+      // =========================================
+      // GENERIC ERROR
+      // =========================================
+
+      else {
+
+        toast.error(
+          "Application Submission Failed"
+        )
+      }
 
     } finally {
 
@@ -184,14 +394,8 @@ export default function LoanForm() {
 
     border: "1px solid #CBD5E1",
 
-    paddingLeft: "45px",
-
     fontSize: "15px"
   }
-
-  // =========================================
-  // MAIN UI
-  // =========================================
 
   return (
 
@@ -209,9 +413,7 @@ export default function LoanForm() {
 
       <div className="container py-5">
 
-        {/* ========================================= */}
-        {/* HERO SECTION */}
-        {/* ========================================= */}
+        {/* HERO */}
 
         <div
           className="
@@ -239,25 +441,6 @@ export default function LoanForm() {
               AI Loan Application
 
             </h1>
-
-            <p
-              style={{
-
-                color: "#64748B",
-
-                fontSize: "18px",
-
-                maxWidth: "700px"
-              }}
-            >
-
-              Submit your financial details
-              and receive intelligent
-              AI-powered underwriting
-              decisions with explainable
-              risk analysis.
-
-            </p>
 
           </div>
 
@@ -292,15 +475,10 @@ export default function LoanForm() {
 
         </div>
 
-        {/* ========================================= */}
-        {/* MAIN CARD */}
-        {/* ========================================= */}
+        {/* FORM CARD */}
 
         <div
-          className="
-            card
-            border-0
-          "
+          className="card border-0"
           style={{
 
             borderRadius: "30px",
@@ -314,9 +492,7 @@ export default function LoanForm() {
 
           <div className="row g-0">
 
-            {/* ========================================= */}
-            {/* LEFT PANEL */}
-            {/* ========================================= */}
+            {/* LEFT */}
 
             <div
               className="col-lg-4"
@@ -344,63 +520,18 @@ export default function LoanForm() {
 
               </h2>
 
-              <p
-                className="mt-4"
-                style={{
+              <p className="mt-4">
 
-                  color:
-                    "rgba(255,255,255,0.85)",
-
-                  lineHeight: "1.9",
-
-                  fontSize: "17px"
-                }}
-              >
-
-                Our AI underwriting engine
-                analyzes credit behavior,
-                income stability, utility
-                scores, and financial
-                indicators to generate
-                intelligent lending decisions.
+                AI-powered underwriting
+                with explainable decisions,
+                portfolio intelligence,
+                and real-time analytics.
 
               </p>
 
-              {/* FEATURES */}
-
-              <div className="mt-5">
-
-                <div className="mb-4">
-
-                  ✅ AI Risk Prediction
-
-                </div>
-
-                <div className="mb-4">
-
-                  ✅ SHAP Explainability
-
-                </div>
-
-                <div className="mb-4">
-
-                  ✅ Portfolio Analytics
-
-                </div>
-
-                <div className="mb-4">
-
-                  ✅ Secure Financial Processing
-
-                </div>
-
-              </div>
-
             </div>
 
-            {/* ========================================= */}
-            {/* RIGHT PANEL */}
-            {/* ========================================= */}
+            {/* RIGHT */}
 
             <div
               className="col-lg-8"
@@ -409,419 +540,130 @@ export default function LoanForm() {
               }}
             >
 
-              <h2
-                style={{
-
-                  fontWeight: "800",
-
-                  color: "#0F172A"
-                }}
-              >
-
-                Applicant Information
-
-              </h2>
-
-              <p
-                style={{
-                  color: "#64748B"
-                }}
-              >
-
-                Complete all fields carefully
-                for accurate AI risk analysis.
-
-              </p>
-
-              {/* FORM */}
-
-              <form
-                onSubmit={handleSubmit}
-                className="mt-5"
-              >
+              <form onSubmit={handleSubmit}>
 
                 <div className="row">
 
-                  {/* FULL NAME */}
+                  {[
+                    ["full_name", "Full Name"],
+                    ["email", "Email"],
+                    ["age", "Age"],
+                    ["monthly_income", "Monthly Income"],
+                    ["loan_amount", "Loan Amount"],
+                    ["existing_debt", "Existing Debt"],
+                    ["credit_score", "Credit Score"],
+                    ["utility_payment_score", "Utility Payment Score"],
+                    ["mobile_usage_score", "Mobile Usage Score"]
+                  ].map(([name, label]) => (
 
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
+                    <div
+                      key={name}
+                      className="col-md-6 mb-4"
                     >
 
-                      Full Name
+                      <label className="form-label fw-semibold">
 
-                    </label>
+                        {label}
 
-                    <div className="position-relative">
-
-                      <User
-                        size={18}
-                        color="#64748B"
-                        style={{
-
-                          position: "absolute",
-
-                          top: "18px",
-
-                          left: "15px"
-                        }}
-                      />
+                      </label>
 
                       <input
-                        type="text"
-                        name="full_name"
+                        type={
+                          name === "email"
+                            ? "email"
+                            : name === "full_name"
+                            ? "text"
+                            : "number"
+                        }
+
+                        name={name}
+
                         className="form-control"
+
                         style={inputStyle}
-                        value={formData.full_name}
+
+                        value={formData[name]}
+
                         onChange={handleChange}
+
+                        min={
+                          name === "credit_score"
+                            ? 300
+                            : undefined
+                        }
+
+                        max={
+                          name === "credit_score"
+                            ? 900
+                            : undefined
+                        }
+
                         required
                       />
 
                     </div>
-
-                  </div>
-
-                  {/* EMAIL */}
-
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
-                    >
-
-                      Email
-
-                    </label>
-
-                    <div className="position-relative">
-
-                      <Mail
-                        size={18}
-                        color="#64748B"
-                        style={{
-
-                          position: "absolute",
-
-                          top: "18px",
-
-                          left: "15px"
-                        }}
-                      />
-
-                      <input
-                        type="email"
-                        name="email"
-                        className="form-control"
-                        style={inputStyle}
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* AGE */}
-
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
-                    >
-
-                      Age
-
-                    </label>
-
-                    <input
-                      type="number"
-                      name="age"
-                      className="form-control"
-                      style={inputStyle}
-                      value={formData.age}
-                      onChange={handleChange}
-                      required
-                    />
-
-                  </div>
+                  ))}
 
                   {/* EMPLOYMENT */}
 
                   <div className="col-md-6 mb-4">
 
-                    <label
-                      className="form-label fw-semibold"
-                    >
+                    <label className="form-label fw-semibold">
 
                       Employment Type
 
                     </label>
 
-                    <div className="position-relative">
-
-                      <Briefcase
-                        size={18}
-                        color="#64748B"
-                        style={{
-
-                          position: "absolute",
-
-                          top: "18px",
-
-                          left: "15px",
-
-                          zIndex: 10
-                        }}
-                      />
-
-                      <select
-                        name="employment_type"
-                        className="form-select"
-                        style={inputStyle}
-                        value={formData.employment_type}
-                        onChange={handleChange}
-                      >
-
-                        <option value="SALARIED">
-
-                          Salaried
-
-                        </option>
-
-                        <option value="BUSINESS">
-
-                          Business
-
-                        </option>
-
-                        <option value="FREELANCER">
-
-                          Freelancer
-
-                        </option>
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* MONTHLY INCOME */}
-
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
-                    >
-
-                      Monthly Income
-
-                    </label>
-
-                    <div className="position-relative">
-
-                      <Wallet
-                        size={18}
-                        color="#64748B"
-                        style={{
-
-                          position: "absolute",
-
-                          top: "18px",
-
-                          left: "15px"
-                        }}
-                      />
-
-                      <input
-                        type="number"
-                        name="monthly_income"
-                        className="form-control"
-                        style={inputStyle}
-                        value={formData.monthly_income}
-                        onChange={handleChange}
-                        required
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* LOAN AMOUNT */}
-
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
-                    >
-
-                      Loan Amount
-
-                    </label>
-
-                    <div className="position-relative">
-
-                      <BadgeDollarSign
-                        size={18}
-                        color="#64748B"
-                        style={{
-
-                          position: "absolute",
-
-                          top: "18px",
-
-                          left: "15px"
-                        }}
-                      />
-
-                      <input
-                        type="number"
-                        name="loan_amount"
-                        className="form-control"
-                        style={inputStyle}
-                        value={formData.loan_amount}
-                        onChange={handleChange}
-                        required
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* EXISTING DEBT */}
-
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
-                    >
-
-                      Existing Debt
-
-                    </label>
-
-                    <input
-                      type="number"
-                      name="existing_debt"
-                      className="form-control"
+                    <select
+                      name="employment_type"
+                      className="form-select"
                       style={inputStyle}
-                      value={formData.existing_debt}
+                      value={formData.employment_type}
                       onChange={handleChange}
-                      required
-                    />
-
-                  </div>
-
-                  {/* CREDIT SCORE */}
-
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
                     >
 
-                      Credit Score
+                      <option value="SALARIED">
+                        Salaried
+                      </option>
 
-                    </label>
+                      <option value="BUSINESS">
+                        Business
+                      </option>
 
-                    <div className="position-relative">
+                      <option value="FREELANCER">
+                        Freelancer
+                      </option>
 
-                      <CreditCard
-                        size={18}
-                        color="#64748B"
-                        style={{
-
-                          position: "absolute",
-
-                          top: "18px",
-
-                          left: "15px"
-                        }}
-                      />
-
-                      <input
-                        type="number"
-                        name="credit_score"
-                        className="form-control"
-                        style={inputStyle}
-                        value={formData.credit_score}
-                        onChange={handleChange}
-                        required
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* UTILITY SCORE */}
-
-                  <div className="col-md-6 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
-                    >
-
-                      Utility Payment Score
-
-                    </label>
-
-                    <input
-                      type="number"
-                      name="utility_payment_score"
-                      className="form-control"
-                      style={inputStyle}
-                      value={formData.utility_payment_score}
-                      onChange={handleChange}
-                    />
-
-                  </div>
-
-                  {/* MOBILE SCORE */}
-
-                  <div className="col-md-12 mb-4">
-
-                    <label
-                      className="form-label fw-semibold"
-                    >
-
-                      Mobile Usage Score
-
-                    </label>
-
-                    <div className="position-relative">
-
-                      <Smartphone
-                        size={18}
-                        color="#64748B"
-                        style={{
-
-                          position: "absolute",
-
-                          top: "18px",
-
-                          left: "15px"
-                        }}
-                      />
-
-                      <input
-                        type="number"
-                        name="mobile_usage_score"
-                        className="form-control"
-                        style={inputStyle}
-                        value={formData.mobile_usage_score}
-                        onChange={handleChange}
-                      />
-
-                    </div>
+                    </select>
 
                   </div>
 
                 </div>
 
-                {/* SUBMIT BUTTON */}
+                {/* CONSENT */}
+
+                <div className="form-check mt-3">
+
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) =>
+                      setConsent(e.target.checked)
+                    }
+                  />
+
+                  <label className="form-check-label">
+
+                    I agree to share alternative
+                    financial behavior data
+                    for AI risk analysis
+
+                  </label>
+
+                </div>
+
+                {/* BUTTON */}
 
                 <button
                   type="submit"
@@ -831,7 +673,7 @@ export default function LoanForm() {
                     btn-primary
                     w-100
                     border-0
-                    mt-3
+                    mt-4
                   "
                   style={{
 
@@ -841,21 +683,13 @@ export default function LoanForm() {
 
                     fontWeight: "700",
 
-                    fontSize: "18px",
-
-                    background:
-                      "linear-gradient(135deg, #2563EB, #1D4ED8)",
-
-                    boxShadow:
-                      "0 10px 25px rgba(37,99,235,0.25)"
+                    fontSize: "18px"
                   }}
                 >
 
                   {
                     loading
-
                       ? "AI Risk Analysis Running..."
-
                       : "Submit Loan Application"
                   }
 
@@ -869,9 +703,7 @@ export default function LoanForm() {
 
         </div>
 
-        {/* ========================================= */}
-        {/* RESULT CARD */}
-        {/* ========================================= */}
+        {/* RESULT */}
 
         {
           responseData && (
@@ -886,175 +718,86 @@ export default function LoanForm() {
 
                 borderRadius: "28px",
 
-                padding: "40px",
-
-                boxShadow:
-                  "0 15px 40px rgba(0,0,0,0.08)"
+                padding: "40px"
               }}
             >
 
-              <div
-                className="
-                  d-flex
-                  align-items-center
-                  gap-3
-                  mb-4
-                "
-              >
+              <h2>
+                AI Decision Result
+              </h2>
 
-                <BarChart3
-                  size={40}
-                  color="#16A34A"
-                />
+              <div className="row text-center mt-4">
 
-                <div>
+                <div className="col-md-3">
 
-                  <h2
-                    style={{
-                      fontWeight: "800"
-                    }}
-                  >
+                  <h6>Risk Score</h6>
 
-                    AI Decision Result
-
+                  <h2>
+                    {responseData?.risk_score}
                   </h2>
 
-                  <p
-                    style={{
-                      color: "#64748B"
-                    }}
-                  >
+                </div>
 
-                    Explainable AI-based
-                    underwriting output
+                <div className="col-md-3">
 
-                  </p>
+                  <h6>Risk Tier</h6>
+
+                  <h2>
+                    {responseData?.risk_tier}
+                  </h2>
+
+                </div>
+
+                <div className="col-md-3">
+
+                  <h6>Decision</h6>
+
+                  <h2>
+                    {responseData?.decision}
+                  </h2>
+
+                </div>
+
+                <div className="col-md-3">
+
+                  <h6>Status</h6>
+
+                  <h2>
+                    {responseData?.status}
+                  </h2>
 
                 </div>
 
               </div>
 
-              <div className="row text-center">
+              {/* EXPLANATIONS */}
 
-                <div className="col-md-3 mb-4">
+              <div className="mt-5">
 
-                  <div
-                    className="p-4"
-                    style={{
+                <h4>
+                  AI Explainability Factors
+                </h4>
 
-                      borderRadius: "18px",
+                {
+                  responseData?.explanations?.map(
 
-                      background: "#EFF6FF"
-                    }}
-                  >
+                    (item, index) => (
 
-                    <h6>Risk Score</h6>
+                      <div
+                        key={index}
+                        className="
+                          alert
+                          alert-primary
+                          mt-3
+                        "
+                      >
 
-                    <h2
-                      style={{
-                        color: "#2563EB"
-                      }}
-                    >
+                        {item}
 
-                      {
-                        responseData.risk_score
-                      }
-
-                    </h2>
-
-                  </div>
-
-                </div>
-
-                <div className="col-md-3 mb-4">
-
-                  <div
-                    className="p-4"
-                    style={{
-
-                      borderRadius: "18px",
-
-                      background: "#FEF2F2"
-                    }}
-                  >
-
-                    <h6>Risk Tier</h6>
-
-                    <h2
-                      style={{
-                        color: "#DC2626"
-                      }}
-                    >
-
-                      {
-                        responseData.risk_tier
-                      }
-
-                    </h2>
-
-                  </div>
-
-                </div>
-
-                <div className="col-md-3 mb-4">
-
-                  <div
-                    className="p-4"
-                    style={{
-
-                      borderRadius: "18px",
-
-                      background: "#ECFDF5"
-                    }}
-                  >
-
-                    <h6>Decision</h6>
-
-                    <h2
-                      style={{
-                        color: "#16A34A"
-                      }}
-                    >
-
-                      {
-                        responseData.decision
-                      }
-
-                    </h2>
-
-                  </div>
-
-                </div>
-
-                <div className="col-md-3 mb-4">
-
-                  <div
-                    className="p-4"
-                    style={{
-
-                      borderRadius: "18px",
-
-                      background: "#F5F3FF"
-                    }}
-                  >
-
-                    <h6>Status</h6>
-
-                    <h2
-                      style={{
-                        color: "#7C3AED"
-                      }}
-                    >
-
-                      {
-                        responseData.status
-                      }
-
-                    </h2>
-
-                  </div>
-
-                </div>
+                      </div>
+                    )
+                  )
+                }
 
               </div>
 

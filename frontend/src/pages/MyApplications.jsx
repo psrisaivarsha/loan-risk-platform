@@ -9,7 +9,6 @@ import {
 import {
   BrainCircuit,
   ShieldCheck,
-  CircleDollarSign,
   TrendingUp,
   FileText,
   ArrowLeft,
@@ -22,20 +21,18 @@ import { Link } from "react-router-dom"
 
 export default function MyApplications() {
 
+  // =========================================
+  // STATES
+  // =========================================
+
   const [
-
     applications,
-
     setApplications
-
   ] = useState([])
 
   const [
-
     loading,
-
     setLoading
-
   ] = useState(true)
 
   // =========================================
@@ -44,18 +41,36 @@ export default function MyApplications() {
 
   useEffect(() => {
 
+    const token =
+      localStorage.getItem("access") ||
+      localStorage.getItem("token")
+
+    if (!token) {
+
+      toast.error(
+        "Session Expired"
+      )
+
+      window.location.href = "/"
+
+      return
+    }
+
     fetchApplications()
 
   }, [])
+
+  // =========================================
+  // API CALL
+  // =========================================
 
   const fetchApplications = async () => {
 
     try {
 
       const token =
-        localStorage.getItem(
-          "access"
-        )
+        localStorage.getItem("access") ||
+        localStorage.getItem("token")
 
       const response =
         await axios.get(
@@ -71,31 +86,71 @@ export default function MyApplications() {
           }
         )
 
-      setApplications(
-        response.data
-      )
+      // =========================================
+      // HANDLE PAGINATION RESPONSE
+      // =========================================
 
-      toast.success(
+      if (
+        response.data.results
+      ) {
 
-        "Applications Loaded Successfully"
+        setApplications(
+          response.data.results
+        )
 
-      )
+      } else {
+
+        setApplications(
+          response.data
+        )
+      }
 
     } catch (error) {
 
       console.log(error)
 
-      toast.error(
+      if (
+        error.response?.status === 401
+      ) {
 
-        "Failed To Load Applications"
+        toast.error(
+          "Session Expired"
+        )
 
-      )
+        localStorage.clear()
+
+        setTimeout(() => {
+
+          window.location.href = "/"
+
+        }, 1200)
+
+      } else {
+
+        toast.error(
+          "Failed To Load Applications"
+        )
+      }
 
     } finally {
 
       setLoading(false)
     }
   }
+
+  // =========================================
+  // COUNTS
+  // =========================================
+
+  const approvedLoans =
+
+    applications.filter(
+
+      (app) =>
+        app.status ===
+        "APPROVED"
+
+    ).length
 
   // =========================================
   // LOADING SCREEN
@@ -169,9 +224,7 @@ export default function MyApplications() {
 
       <div className="container py-5">
 
-        {/* ========================================= */}
-        {/* HERO SECTION */}
-        {/* ========================================= */}
+        {/* HERO */}
 
         <div
           className="
@@ -251,9 +304,7 @@ export default function MyApplications() {
 
         </div>
 
-        {/* ========================================= */}
-        {/* STATS SECTION */}
-        {/* ========================================= */}
+        {/* STATS */}
 
         <div className="row g-4 mb-5">
 
@@ -304,9 +355,7 @@ export default function MyApplications() {
                 }}
               >
 
-                {
-                  applications.length
-                }
+                {applications.length}
 
               </h2>
 
@@ -361,15 +410,7 @@ export default function MyApplications() {
                 }}
               >
 
-                {
-                  applications.filter(
-
-                    (app) =>
-                      app.status ===
-                      "APPROVED"
-
-                  ).length
-                }
+                {approvedLoans}
 
               </h2>
 
@@ -377,7 +418,7 @@ export default function MyApplications() {
 
           </div>
 
-          {/* RISK */}
+          {/* AI */}
 
           <div className="col-md-3">
 
@@ -489,9 +530,7 @@ export default function MyApplications() {
 
         </div>
 
-        {/* ========================================= */}
-        {/* EMPTY STATE */}
-        {/* ========================================= */}
+        {/* EMPTY */}
 
         {
           applications.length === 0 && (
@@ -563,469 +602,158 @@ export default function MyApplications() {
           )
         }
 
-        {/* ========================================= */}
-        {/* APPLICATION CARDS */}
-        {/* ========================================= */}
+        {/* APPLICATIONS TABLE */}
 
-        <div className="row g-4">
+        {
+          applications.length > 0 && (
 
-          {
-            applications.map((app) => (
+            <div className="mt-5">
 
               <div
-                className="col-lg-6"
-                key={app.id}
+                className="card border-0"
+                style={{
+
+                  borderRadius: "24px",
+
+                  padding: "30px",
+
+                  boxShadow:
+                    "0 10px 30px rgba(0,0,0,0.08)"
+                }}
               >
 
-                <div
-                  className="
-                    card
-                    border-0
-                    h-100
-                  "
+                <h3
+                  className="mb-4"
                   style={{
-
-                    borderRadius: "28px",
-
-                    overflow: "hidden",
-
-                    boxShadow:
-                      "0 15px 40px rgba(0,0,0,0.08)"
+                    fontWeight: "700"
                   }}
                 >
 
-                  {/* TOP HEADER */}
+                  Submitted Applications
 
-                  <div
-                    style={{
+                </h3>
 
-                      background:
-                        "linear-gradient(135deg, #2563EB, #1D4ED8)",
+                <div className="table-responsive">
 
-                      padding: "30px",
+                  <table className="table align-middle">
 
-                      color: "white"
-                    }}
-                  >
+                    <thead>
 
-                    <div
-                      className="
-                        d-flex
-                        justify-content-between
-                        align-items-center
-                      "
-                    >
+                      <tr>
 
-                      <div>
+                        <th>Name</th>
 
-                        <h3
-                          style={{
-                            fontWeight: "800"
-                          }}
-                        >
+                        <th>Loan Amount</th>
 
-                          {app.full_name}
+                        <th>Risk Score</th>
 
-                        </h3>
+                        <th>Decision</th>
 
-                        <p
-                          style={{
-                            color:
-                              "rgba(255,255,255,0.85)"
-                          }}
-                        >
+                        <th>Status</th>
 
-                          AI Underwriting Report
+                        <th>Action</th>
 
-                        </p>
+                      </tr>
 
-                      </div>
+                    </thead>
 
-                      <span
-                        className="badge"
-                        style={{
+                    <tbody>
 
-                          background:
-                            app.decision ===
-                            "APPROVE"
+                      {
+                        applications.map((app) => (
 
-                              ? "#16A34A"
+                          <tr key={app.id}>
 
-                              : app.decision ===
-                                "CONDITIONAL"
+                            <td>
+                              {app.full_name}
+                            </td>
 
-                              ? "#F59E0B"
+                            <td>
+                              ₹{app.loan_amount}
+                            </td>
 
-                              : "#DC2626",
+                            <td>
+                              {app.risk_score}
+                            </td>
 
-                          padding:
-                            "12px 18px",
+                            <td>
 
-                          borderRadius:
-                            "12px",
+                              <span
+                                className={
 
-                          fontSize:
-                            "14px"
-                        }}
-                      >
+                                  app.decision === "APPROVE"
 
-                        {app.decision}
+                                    ? "badge bg-success"
 
-                      </span>
+                                    : app.decision === "DECLINE"
 
-                    </div>
+                                    ? "badge bg-danger"
 
-                  </div>
-
-                  {/* BODY */}
-
-                  <div
-                    className="p-4"
-                  >
-
-                    {/* GRID */}
-
-                    <div className="row">
-
-                      <div className="col-6 mb-4">
-
-                        <h6
-                          style={{
-                            color: "#64748B"
-                          }}
-                        >
-
-                          Loan Amount
-
-                        </h6>
-
-                        <h5
-                          style={{
-                            fontWeight: "700"
-                          }}
-                        >
-
-                          ₹{app.loan_amount}
-
-                        </h5>
-
-                      </div>
-
-                      <div className="col-6 mb-4">
-
-                        <h6
-                          style={{
-                            color: "#64748B"
-                          }}
-                        >
-
-                          Monthly Income
-
-                        </h6>
-
-                        <h5
-                          style={{
-                            fontWeight: "700"
-                          }}
-                        >
-
-                          ₹{app.monthly_income}
-
-                        </h5>
-
-                      </div>
-
-                      <div className="col-6 mb-4">
-
-                        <h6
-                          style={{
-                            color: "#64748B"
-                          }}
-                        >
-
-                          Credit Score
-
-                        </h6>
-
-                        <h5
-                          style={{
-                            fontWeight: "700"
-                          }}
-                        >
-
-                          {app.credit_score}
-
-                        </h5>
-
-                      </div>
-
-                      <div className="col-6 mb-4">
-
-                        <h6
-                          style={{
-                            color: "#64748B"
-                          }}
-                        >
-
-                          Risk Score
-
-                        </h6>
-
-                        <h5
-                          style={{
-                            color: "#2563EB",
-                            fontWeight: "800"
-                          }}
-                        >
-
-                          {app.risk_score}
-
-                        </h5>
-
-                      </div>
-
-                    </div>
-
-                    {/* RISK */}
-
-                    <div
-                      className="
-                        d-flex
-                        justify-content-between
-                        align-items-center
-                        mb-4
-                      "
-                    >
-
-                      <div>
-
-                        <h6
-                          style={{
-                            color: "#64748B"
-                          }}
-                        >
-
-                          Risk Tier
-
-                        </h6>
-
-                        <span
-                          className="badge"
-                          style={{
-
-                            background:
-                              app.risk_tier ===
-                              "LOW_RISK"
-
-                                ? "#DCFCE7"
-
-                                : app.risk_tier ===
-                                  "MEDIUM_RISK"
-
-                                ? "#FEF3C7"
-
-                                : "#FEE2E2",
-
-                            color:
-                              app.risk_tier ===
-                              "LOW_RISK"
-
-                                ? "#166534"
-
-                                : app.risk_tier ===
-                                  "MEDIUM_RISK"
-
-                                ? "#92400E"
-
-                                : "#991B1B",
-
-                            padding:
-                              "10px 16px",
-
-                            borderRadius:
-                              "12px",
-
-                            fontSize:
-                              "13px"
-                          }}
-                        >
-
-                          {app.risk_tier}
-
-                        </span>
-
-                      </div>
-
-                      <div>
-
-                        <h6
-                          style={{
-                            color: "#64748B"
-                          }}
-                        >
-
-                          Confidence
-
-                        </h6>
-
-                        <h5
-                          style={{
-                            fontWeight: "700"
-                          }}
-                        >
-
-                          {
-                            app.confidence_score
-                          }%
-
-                        </h5>
-
-                      </div>
-
-                    </div>
-
-                    {/* STATUS */}
-
-                    <div
-                      className="mb-4"
-                    >
-
-                      <h6
-                        style={{
-                          color: "#64748B"
-                        }}
-                      >
-
-                        Application Status
-
-                      </h6>
-
-                      <span
-                        className="badge"
-                        style={{
-
-                          background:
-                            app.status ===
-                            "APPROVED"
-
-                              ? "#16A34A"
-
-                              : app.status ===
-                                "REJECTED"
-
-                              ? "#DC2626"
-
-                              : "#F59E0B",
-
-                          padding:
-                            "10px 16px",
-
-                          borderRadius:
-                            "12px",
-
-                          fontSize:
-                            "13px"
-                        }}
-                      >
-
-                        {app.status}
-
-                      </span>
-
-                    </div>
-
-                    {/* AI EXPLANATION */}
-
-                    <div
-                      className="
-                        p-4
-                        mb-4
-                      "
-                      style={{
-
-                        borderRadius: "18px",
-
-                        background: "#F8FAFC"
-                      }}
-                    >
-
-                      <h5
-                        style={{
-                          fontWeight: "700"
-                        }}
-                      >
-
-                        AI Explanation
-
-                      </h5>
-
-                      <ul
-                        className="mt-3"
-                      >
-
-                        {
-                          app.explanation?.map(
-
-                            (
-                              reason,
-                              index
-                            ) => (
-
-                              <li
-                                key={index}
-                                className="mb-2"
+                                    : "badge bg-warning text-dark"
+                                }
                               >
 
-                                {reason}
+                                {app.decision}
 
-                              </li>
-                            )
-                          )
-                        }
+                              </span>
 
-                      </ul>
+                            </td>
 
-                    </div>
+                            <td>
 
-                    {/* BUTTON */}
+                              <span
+                                className={
 
-                    <Link
+                                  app.status === "APPROVED"
 
-                      to={`/application/${app.id}`}
+                                    ? "badge bg-success"
 
-                      className="
-                        btn
-                        btn-primary
-                        w-100
-                        border-0
-                      "
+                                    : app.status === "REJECTED"
 
-                      style={{
+                                    ? "badge bg-danger"
 
-                        height: "55px",
+                                    : "badge bg-warning text-dark"
+                                }
+                              >
 
-                        borderRadius: "16px",
+                                {app.status}
 
-                        fontWeight: "700",
+                              </span>
 
-                        background:
-                          "linear-gradient(135deg, #2563EB, #1D4ED8)"
-                      }}
-                    >
+                            </td>
 
-                      View Full AI Report
+                            <td>
 
-                    </Link>
+                              <Link
+                                to={`/application/${app.id}`}
+                                className="
+                                  btn
+                                  btn-primary
+                                  btn-sm
+                                "
+                              >
 
-                  </div>
+                                View Full Report
+
+                              </Link>
+
+                            </td>
+
+                          </tr>
+                        ))
+                      }
+
+                    </tbody>
+
+                  </table>
 
                 </div>
 
               </div>
-            ))
-          }
 
-        </div>
+            </div>
+          )
+        }
 
       </div>
 
